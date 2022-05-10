@@ -4,10 +4,12 @@ import io
 from os.path import join
 
 from transformers import AutoTokenizer, AutoModelWithLMHead, SummarizationPipeline
+
 pipeline = SummarizationPipeline(
-    model=AutoModelWithLMHead.from_pretrained("SEBIS/code_trans_t5_base_source_code_summarization_python"),
-    tokenizer=AutoTokenizer.from_pretrained("SEBIS/code_trans_t5_base_source_code_summarization_python",
+    model=AutoModelWithLMHead.from_pretrained("SEBIS/code_trans_t5_base_code_documentation_generation_python"),
+    tokenizer=AutoTokenizer.from_pretrained("SEBIS/code_trans_t5_base_code_documentation_generation_python",
                                             skip_special_tokens=True))
+
 
 def pythonTokenizer(line):
     result = []
@@ -23,10 +25,13 @@ def pythonTokenizer(line):
                 result.append(str(tok))
     return ' '.join(result)
 
+
 '''
 Function to get file from directory
 @Return new current path from file and files 
 '''
+
+
 def getFileFromDir(currentPath):
     rep = [f for f in os.listdir(currentPath) if os.path.isdir(join(currentPath, f))]
     newCurrentRep = currentPath + "\\" + rep[0]
@@ -38,6 +43,7 @@ def getFileFromDir(currentPath):
 @currentPath : Current path from file 
 :return Function from file
 '''
+
 
 def getFunctFromFile(currentPath):
     files = getFileFromDir(currentPath)
@@ -62,14 +68,18 @@ def getFunctFromFile(currentPath):
     func = sorted(func, key=len, reverse=True)
     return func
 
+
 '''
 Fonction to generate summarize from function 
 @code : Array with extract code from file
 :return Array with code and summarize
 '''
+
+
 def createCodeAndSummarize(code):
-    x = [{}]
+    x = []
     for c in code:
         tokenized_code = pythonTokenizer(c)
-        x.append({c, pipeline([tokenized_code])})
+        print(tokenized_code)
+        x.append((c, pipeline([tokenized_code])))
     return x
