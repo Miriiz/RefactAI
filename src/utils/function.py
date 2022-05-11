@@ -35,7 +35,12 @@ Function to get file from directory
 def getFileFromDir(currentPath):
     rep = [f for f in os.listdir(currentPath) if os.path.isdir(join(currentPath, f))]
     newCurrentRep = currentPath + "\\" + rep[0]
-    file = [f for f in os.listdir(currentPath) if os.path.isfile(join(currentPath, f))]
+    file = []
+    for r in rep:
+        files = os.listdir(currentPath + "\\" + r)
+        for name in files:
+            file.append(name)
+
     return newCurrentRep, file
 
 
@@ -65,7 +70,6 @@ def getFunctFromFile(currentPath):
                 strr = nextline
             func.append(val)
     func.pop(0)
-    func = sorted(func, key=len, reverse=True)
     return func
 
 
@@ -80,6 +84,6 @@ def createCodeAndSummarize(code):
     x = []
     for c in code:
         tokenized_code = pythonTokenizer(c)
-        print(tokenized_code)
+        # print(tokenized_code)
         x.append((c, pipeline([tokenized_code])))
     return x
