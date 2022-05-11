@@ -34,7 +34,9 @@ Function to get file from directory
 
 def getFileFromDir(currentPath):
     rep = [f for f in os.listdir(currentPath) if os.path.isdir(join(currentPath, f))]
-    newCurrentRep = currentPath + "\\" + rep[0]
+    newCurrentRep = []
+    for r in rep:
+        newCurrentRep.append(currentPath + "\\" + r)
     file = []
     for r in rep:
         files = os.listdir(currentPath + "\\" + r)
@@ -53,22 +55,29 @@ def getFileFromDir(currentPath):
 def getFunctFromFile(currentPath):
     files = getFileFromDir(currentPath)
     path = files[0]
+    print(files)
     func = []
     val = ""
-    for f in files[1]:
-        with open(path + "\\" + f) as fil:
+    for r in files[0]:
 
-            strr = fil.readline()
-            while strr != "":
-                if "def" in strr:
-                    func.append(val)
-                    val = strr
+        if os.listdir(r) != 0:
+            path = r
+            for f in files[1]:
+                filepath = path + "\\" + f
+                if os.path.exists(filepath):
+                    with open(filepath) as fil:
 
-                else:
-                    val += str(strr)
-                nextline = fil.readline()
-                strr = nextline
-            func.append(val)
+                        strr = fil.readline()
+                        while strr != "":
+                            if "def" in strr:
+                                func.append(val)
+                                val = strr
+
+                            else:
+                                val += str(strr)
+                            nextline = fil.readline()
+                            strr = nextline
+                        func.append(val)
     func.pop(0)
     return func
 
