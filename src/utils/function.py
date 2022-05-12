@@ -1,6 +1,6 @@
-import os, sys
-import tokenize
 import io
+import os
+import tokenize
 from os.path import join
 
 from transformers import AutoTokenizer, AutoModelWithLMHead, SummarizationPipeline
