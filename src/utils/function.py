@@ -1,6 +1,6 @@
-import os, sys
-import tokenize
 import io
+import os
+import tokenize
 from os.path import join
 
 from transformers import AutoTokenizer, AutoModelWithLMHead, SummarizationPipeline
@@ -41,7 +41,8 @@ def getFileFromDir(currentPath):
     for r in rep:
         files = os.listdir(currentPath + "\\" + r)
         for name in files:
-            file.append(name)
+            if os.path.splitext(name)[1] == '.py':
+                file.append(name)
 
     return newCurrentRep, file
 
@@ -59,20 +60,17 @@ def getFunctFromFile(currentPath):
     func = []
     val = ""
     for r in files[0]:
-
         if os.listdir(r) != 0:
             path = r
             for f in files[1]:
                 filepath = path + "\\" + f
                 if os.path.exists(filepath):
                     with open(filepath) as fil:
-
                         strr = fil.readline()
                         while strr != "":
                             if "def" in strr:
                                 func.append(val)
                                 val = strr
-
                             else:
                                 val += str(strr)
                             nextline = fil.readline()

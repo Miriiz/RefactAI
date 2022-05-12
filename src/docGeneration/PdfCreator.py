@@ -13,3 +13,6 @@ class PDF(FPDF):
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
         self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
+
+    def save(self, filename):
+        self.output('output/' + filename + '.pdf', 'F')
