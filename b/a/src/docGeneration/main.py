@@ -1,5 +1,5 @@
-from src.utils.function import *
-from src.docGeneration.PdfCreator import PDF
+from b.a.src.utils.function import *
+from b.a.src.docGeneration.PdfCreator import PDF
 
 if __name__ == '__main__':
     code = getFunctFromFile(os.path.dirname(__file__))
