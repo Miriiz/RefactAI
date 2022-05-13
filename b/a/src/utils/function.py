@@ -5,7 +5,7 @@ from os.path import join
 
 from transformers import AutoTokenizer, AutoModelWithLMHead, SummarizationPipeline
 
-IGNORE_DIR_NAME = "b"
+IGNORE_DIR_NAME = ".github"
 IGNORE_DIR_NAME_2 = ".git"
 pipeline = SummarizationPipeline(
     model=AutoModelWithLMHead.from_pretrained("SEBIS/code_trans_t5_base_code_documentation_generation_python"),
@@ -44,15 +44,15 @@ def getFileFromDir(currentPath):
     newCurrentRep = []
     newCurrentRep.append(currentPath)
     for r in rep:
-        newCurrentRep.append(currentPath+ r)
+        if r != currentPath:
+            newCurrentRep.append(currentPath + r)
     file = []
     for r in newCurrentRep:
         files = os.listdir(r)
         for name in files:
             if os.path.splitext(name)[1] == '.py':
                 file.append(name)
-    print(file)
-    return newCurrentRep, file
+    return newCurrentRep, file, currentPath
 
 
 '''
@@ -70,7 +70,10 @@ def getFunctFromFile(currentPath):
         if os.listdir(r) != 0:
             path = r
             for f in files[1]:
-                filepath = path + "\\" + f
+                if path != files[2]:
+                    filepath = path + "/" + f
+                else:
+                    filepath = path + f
                 if os.path.exists(filepath):
                     with open(filepath) as fil:
                         strr = fil.readline()
