@@ -5,6 +5,8 @@ from os.path import join
 
 from transformers import AutoTokenizer, AutoModelWithLMHead, SummarizationPipeline
 
+IGNORE_DIR_NAME = "b"
+IGNORE_DIR_NAME_2 = ".git"
 pipeline = SummarizationPipeline(
     model=AutoModelWithLMHead.from_pretrained("SEBIS/code_trans_t5_base_code_documentation_generation_python"),
     tokenizer=AutoTokenizer.from_pretrained("SEBIS/code_trans_t5_base_code_documentation_generation_python",
@@ -33,17 +35,23 @@ Function to get file from directory
 
 
 def getFileFromDir(currentPath):
-    rep = [f for f in os.listdir(currentPath) if os.path.isdir(join(currentPath, f))]
+    currentPath = ''.join(currentPath.split(IGNORE_DIR_NAME)[0])
+    tmp = [f for f in os.listdir(currentPath) if os.path.isdir(join(currentPath, f))]
+    rep = []
+    for rm in tmp:
+        if rm != IGNORE_DIR_NAME and rm != IGNORE_DIR_NAME_2:
+            rep.append(rm)
     newCurrentRep = []
+    newCurrentRep.append(currentPath)
     for r in rep:
-        newCurrentRep.append(currentPath + "\\" + r)
+        newCurrentRep.append(currentPath+ r)
     file = []
-    for r in rep:
-        files = os.listdir(currentPath + "\\" + r)
+    for r in newCurrentRep:
+        files = os.listdir(r)
         for name in files:
             if os.path.splitext(name)[1] == '.py':
                 file.append(name)
-
+    print(file)
     return newCurrentRep, file
 
 
@@ -56,7 +64,6 @@ def getFileFromDir(currentPath):
 def getFunctFromFile(currentPath):
     files = getFileFromDir(currentPath)
     path = files[0]
-    print(files)
     func = []
     val = ""
     for r in files[0]:
