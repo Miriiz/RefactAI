@@ -1,3 +1,5 @@
+import os
+
 from fpdf import FPDF
 
 
@@ -22,5 +24,9 @@ class PDF(FPDF):
         self.cell(0, 10, "-> " + func[1][0]['summary_text'], 0, 1)
         self.ln()
 
-    def save(self, filename):
-        self.output('output/' + filename + '.pdf', 'F')
+    def save(self, path,  filename):
+        if os.path.exists(path):
+            self.output(path + filename + '.pdf', 'F')
+        else:
+            os.mkdir(path)
+            self.output(path + filename + '.pdf', 'F')
