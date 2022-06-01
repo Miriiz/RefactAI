@@ -7,6 +7,8 @@ from ModelParam import *
 train_size = 0
 val_size = 0
 class_w = 0
+
+
 def create_base_model(add_custom_layers_func) -> Model:
     m = Sequential()
     add_custom_layers_func(m)
@@ -22,6 +24,11 @@ def create_base_model(add_custom_layers_func) -> Model:
 
 def linear_mod(Seq):
     pass
+
+
+def forest_mod(model):
+    model = tf.keras.RandomForestModel()
+    return model
 
 
 def add_mlp_layers(model):
