@@ -1,5 +1,5 @@
 from GithubDataset import GithubDataset
-from  Model import  *
+from Model import *
 
 if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -10,4 +10,5 @@ if __name__ == '__main__':
     dataset.save("output\\test2.csv")
     '''
     model_linear = create_base_model(linear_mod)
-    model_mlp = create_base_model(add_mlp_layers)
+
+    # model_mlp = create_base_model(add_mlp_layers)
