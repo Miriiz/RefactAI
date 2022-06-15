@@ -6,5 +6,6 @@ if __name__ == '__main__':
 
     '''
     model_linear = create_base_model(linear_mod)
+
     model_mlp = create_base_model(add_mlp_layers)
     '''
