@@ -1,134 +1,253 @@
-Username,Repo,Commit,Bug,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
-ray-project,ray,009df65a570ba1af511263eb6ad78b8a336ae5c9,memory,Code
-numpy,numpy,e3f28bd6c69e4fc72c1f70d43f08c1892f9c7771,memory,Code
-numpy,numpy,2fc8335881fac4652fd4850867ae4932f0cfdf98,memory,Code
-deepfakes,faceswap,f8c1bf26dfe6cf04e3d328273a48ee4ea71d694e,memory,Code
+Username;Repo;Commit;Bug;Code
+ray-project;ray;1483c4553ccee2840275634d6a5271d87fb763a3;"use smaller instance for scheduling tests (#25635)
+
+m5.16xlarge instances have 64 CPU and 256GB memory, which are overkill for scheduling tests that do not have a lot of computations. Use smaller instance m5.4xlarge to save cost and make allocating instances easier.";"@@ -5,15 +5,18 @@ max_workers: 999
+ 
+ head_node_type:
+     name: head_node
+-    instance_type: m5.16xlarge
++    instance_type: m5.4xlarge
+     resources:
++      # Assume the node has 64 CPU instead of 16.
++      # This should be fine since each task has little
++      # computation in scheduling tests.
+       cpu: 64
+       custom_resources:
+         node: 1
+ 
+ worker_node_types:
+     - name: worker_node
+-      instance_type: m5.16xlarge
++      instance_type: m5.4xlarge
+       min_workers: 31
+       max_workers: 31
+       use_spot: false"
+ray-project;ray;ce103b4ffafe7b9d9a1306d7a1b1be9b85f14600;Eagerly clears object memory before Python GC kicks in when consuming DatasetPipeline (#25461);"@@ -27,6 +27,7 @@ def batch_blocks(
+     stats: Union[DatasetStats, DatasetPipelineStats],
+     *,
+     prefetch_blocks: int = 0,
++    clear_block_after_read: bool = False,
+     batch_size: Optional[int] = None,
+     batch_format: str = ""native"",
+     drop_last: bool = False,
+@@ -41,6 +42,11 @@ def batch_blocks(
+     Args:
+         prefetch_blocks: The number of blocks to prefetch ahead of the
+             current block during the scan.
++        clear_block_after_read: Whether to clear the block from object store
++            manually (i.e. without waiting for Python's automatic GC) after it
++            is read. Doing so will reclaim memory faster and hence reduce the
++            memory footprint. However, the caller has to ensure the safety, i.e.
++            the block will never be accessed again.
+         batch_size: Record batch size, or None to let the system pick.
+         batch_format: The format in which to return each batch.
+             Specify ""native"" to use the current block format (promoting
+@@ -74,7 +80,9 @@ def batch_block(block: ObjectRef[Block]):
+         prefetcher = ActorBlockPrefetcher()
+     else:
+         prefetcher = WaitBlockPrefetcher()
+-    for block_window in _sliding_window(blocks, prefetch_blocks + 1):
++    for block_window in _sliding_window(
++        blocks, prefetch_blocks + 1, clear_block_after_read
++    ):
+         block_window = list(block_window)
+         with stats.iter_wait_s.timer():
+             prefetcher.prefetch_blocks(block_window)
+@@ -109,7 +117,7 @@ def _format_batch(batch: Block, batch_format: str) -> BatchType:
+     return batch
+ 
+ 
+-def _sliding_window(iterable: Iterable, n: int):
++def _sliding_window(iterable: Iterable, n: int, clear_block_after_read: bool = False):
+     """"""Creates an iterator consisting of n-width sliding windows over
+     iterable. The sliding windows are constructed lazily such that an
+     element on the base iterator (iterable) isn't consumed until the
+@@ -122,6 +130,11 @@ def _sliding_window(iterable: Iterable, n: int):
+         iterable: The iterable on which the sliding window will be
+             created.
+         n: The width of the sliding window.
++        clear_block_after_read: Whether to clear the leftmost block
++            from object store manually (i.e. without waiting for Python's
++            automatic GC) when it's out of the sliding window (i.e. been
++            consumed), so as to reclaim memory faster. The caller has to
++            ensure safety, i.e. the block will never be accessed again.
+ 
+     Returns:
+         An iterator of n-width windows over iterable.
+@@ -133,6 +146,9 @@ def _sliding_window(iterable: Iterable, n: int):
+     if len(window) > 0:
+         yield tuple(window)
+     for elem in it:
++        block_ref = window.popleft()
++        if clear_block_after_read:
++            ray.internal.internal_api.free(block_ref, local_only=False)
+         window.append(elem)
+         yield tuple(window)
+ "
+ray-project;ray;ce103b4ffafe7b9d9a1306d7a1b1be9b85f14600;Eagerly clears object memory before Python GC kicks in when consuming DatasetPipeline (#25461);"@@ -173,11 +173,18 @@ def iter_batches(
+         Returns:
+             An iterator over record batches.
+         """"""
++        if self._executed[0]:
++            raise RuntimeError(""Pipeline cannot be read multiple times."")
+         time_start = time.perf_counter()
++        # When the DatasetPipeline actually did transformations (i.e. the self._stages
++        # isn't empty), there will be output blocks created. In this case, those output
++        # blocks are safe to clear right after read, because we know they will never be
++        # accessed again, given that DatasetPipeline can be read at most once.
+         yield from batch_blocks(
+             self._iter_blocks(),
+             self._stats,
+             prefetch_blocks=prefetch_blocks,
++            clear_block_after_read=(len(self._stages) > 0),
+             batch_size=batch_size,
+             batch_format=batch_format,
+             drop_last=drop_last,"
+ray-project;ray;ce103b4ffafe7b9d9a1306d7a1b1be9b85f14600;Eagerly clears object memory before Python GC kicks in when consuming DatasetPipeline (#25461);"@@ -0,0 +1,108 @@
++import time
++
++import pytest
++
++import ray
++from ray.tests.conftest import *  # noqa
++
++from ray.internal.internal_api import memory_summary
++
++
++def check_no_spill(ctx, pipe, prefetch_blocks: int = 0):
++    # Run .iter_batches() for 10 secs, and we expect no object spilling.
++    end_time = time.time() + 10
++    for batch in pipe.iter_batches(prefetch_blocks=prefetch_blocks):
++        if time.time() > end_time:
++            break
++    meminfo = memory_summary(ctx.address_info[""address""], stats_only=True)
++    assert ""Spilled"" not in meminfo, meminfo
++
++
++def test_iter_batches_no_spilling_upon_no_transformation(shutdown_only):
++    # The object store is about 300MB.
++    ctx = ray.init(num_cpus=1, object_store_memory=300e6)
++    # The size of dataset is 500*(80*80*4)*8B, about 100MB.
++    ds = ray.data.range_tensor(500, shape=(80, 80, 4), parallelism=100)
++
++    check_no_spill(ctx, ds.repeat())
++    check_no_spill(ctx, ds.repeat(), 5)
++
++    check_no_spill(ctx, ds.window(blocks_per_window=20))
++    check_no_spill(ctx, ds.window(blocks_per_window=20), 5)
++
++
++def test_iter_batches_no_spilling_upon_prior_transformation(shutdown_only):
++    # The object store is about 500MB.
++    ctx = ray.init(num_cpus=1, object_store_memory=500e6)
++    # The size of dataset is 500*(80*80*4)*8B, about 100MB.
++    ds = ray.data.range_tensor(500, shape=(80, 80, 4), parallelism=100)
++
++    # Repeat, with transformation prior to the pipeline.
++    check_no_spill(ctx, ds.map_batches(lambda x: x).repeat())
++    check_no_spill(ctx, ds.map_batches(lambda x: x).repeat(), 5)
++
++    # Window, with transformation prior to the pipeline.
++    check_no_spill(ctx, ds.map_batches(lambda x: x).window(blocks_per_window=20))
++    check_no_spill(ctx, ds.map_batches(lambda x: x).window(blocks_per_window=20), 5)
++
++
++def test_iter_batches_no_spilling_upon_post_transformation(shutdown_only):
++    # The object store is about 500MB.
++    ctx = ray.init(num_cpus=1, object_store_memory=500e6)
++    # The size of dataset is 500*(80*80*4)*8B, about 100MB.
++    ds = ray.data.range_tensor(500, shape=(80, 80, 4), parallelism=100)
++
++    # Repeat, with transformation post the pipeline creation.
++    check_no_spill(ctx, ds.repeat().map_batches(lambda x: x))
++    check_no_spill(ctx, ds.repeat().map_batches(lambda x: x), 5)
++
++    # Window, with transformation post the pipeline creation.
++    check_no_spill(ctx, ds.window(blocks_per_window=20).map_batches(lambda x: x))
++    check_no_spill(ctx, ds.window(blocks_per_window=20).map_batches(lambda x: x), 5)
++
++
++def test_iter_batches_no_spilling_upon_transformations(shutdown_only):
++    # The object store is about 700MB.
++    ctx = ray.init(num_cpus=1, object_store_memory=700e6)
++    # The size of dataset is 500*(80*80*4)*8B, about 100MB.
++    ds = ray.data.range_tensor(500, shape=(80, 80, 4), parallelism=100)
++
++    # Repeat, with transformation before and post the pipeline.
++    check_no_spill(ctx, ds.map_batches(lambda x: x).repeat().map_batches(lambda x: x))
++    check_no_spill(
++        ctx, ds.map_batches(lambda x: x).repeat().map_batches(lambda x: x), 5
++    )
++
++    # Window, with transformation before and post the pipeline.
++    check_no_spill(
++        ctx,
++        ds.map_batches(lambda x: x)
++        .window(blocks_per_window=20)
++        .map_batches(lambda x: x),
++    )
++    check_no_spill(
++        ctx,
++        ds.map_batches(lambda x: x)
++        .window(blocks_per_window=20)
++        .map_batches(lambda x: x),
++        5,
++    )
++
++
++def test_iter_batches_no_spilling_upon_shuffle(shutdown_only):
++    # The object store is about 500MB.
++    ctx = ray.init(num_cpus=1, object_store_memory=500e6)
++    # The size of dataset is 500*(80*80*4)*8B, about 100MB.
++    ds = ray.data.range_tensor(500, shape=(80, 80, 4), parallelism=100)
++
++    check_no_spill(ctx, ds.repeat().random_shuffle_each_window())
++    check_no_spill(ctx, ds.repeat().random_shuffle_each_window(), 5)
++
++    check_no_spill(ctx, ds.window(blocks_per_window=20).random_shuffle_each_window())
++    check_no_spill(ctx, ds.window(blocks_per_window=20).random_shuffle_each_window(), 5)
++
++
++if __name__ == ""__main__"":
++    import sys
++
++    sys.exit(pytest.main([""-v"", __file__]))"
+Cadene;pretrained-models.pytorch;b63db90071564844c857739d0806b2b70e29537a;Add pnasnetalarge and nasnetalarge to tests (improve memory with set_grad_enabled);"@@ -5,6 +5,9 @@
+ import pretrainedmodels as pm
+ import pretrainedmodels.utils as utils
+ 
++# torch 1.0.x
++set_grad_enabled = getattr(torch.autograd, 'set_grad_enabled', None)
++
+ pm_args = []
+ for model_name in pm.model_names:
+     for pretrained in pm.pretrained_settings[model_name]:
+@@ -19,20 +22,14 @@ def equal(x,y):
+ 
+ @pytest.mark.parametrize('model_name, pretrained', pm_args)
+ def test_pm_imagenet(model_name, pretrained):
++    if set_grad_enabled: set_grad_enabled(False)
++
+     print('test_pm_imagenet(""{}"")'.format(model_name))
+     net = pm.__dict__[model_name](
+         num_classes=1000,
+         pretrained=pretrained)
+     net.eval()
+ 
+-    if 'nasnetalarge' == model_name:
+-        # nasnetalarge too big for travis
+-        return
+-
+-    if 'pnasnet5large' == model_name:
+-        # pnasnet5large too big for travis
+-        return
+-
+     tensor = utils.TransformImage(net)(img)
+     tensor = tensor.unsqueeze(0)
+     x = Variable(tensor, requires_grad=False)
+@@ -58,3 +55,5 @@ def test_pm_imagenet(model_name, pretrained):
+ 
+     out_logits_3 = net.logits(out_feats)
+     assert out_logits_3.shape == torch.Size([1,10])
++
++    if set_grad_enabled: set_grad_enabled(True)"

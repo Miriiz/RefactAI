@@ -1,9 +1,7 @@
-import base64
-import json
 import requests
-import os
 import csv
 from define import github_token
+from tqdm import tqdm
 
 
 # issue
@@ -15,34 +13,37 @@ class GithubDataset:
         self.searching_word = searching_word
         self.data = []
         self.page = 1
+        self.repo_per_page = 20
+        if number_of_repo < 20:
+            self.repo_per_page = number_of_repo
 
-    def load_commits(self):
-        repos = self.get_all_repo(self.page)
+    def load_commits(self, start_at=1):
         i = 0
-        while i < self.number_of_repo:
+        self.page = start_at
+        number_of_pages = int(self.number_of_repo / self.repo_per_page)
+        for i in tqdm(range(number_of_pages)):
+            repos = self.get_all_repo(self.page)
             for repo in repos:
                 commits = self.get_all_commits(repo['owner']['login'], repo['name'])
                 for commit in commits:
                     if self.searching_word in commit['commit']['message']:
-                        print("found " + str(len(self.data)))
                         detailed_commit = self.get_commit(repo['owner']['login'], repo['name'], commit['sha'])
                         for file in detailed_commit['files']:
-                            self.data.append([repo['owner']['login'], repo['name'], commit['sha'], commit['commit']['message'],
-                                              file['patch']])
-                i += 1
-                if i == self.number_of_repo:
-                    break
+                            if 'patch' in file:
+                                self.data.append([str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
+                                                  commit['commit']['message'], file['patch']])
             self.page += 1
 
     def get_all_repo(self, page):
-        url = f'https://api.github.com/search/repositories?q=language:{self.language}&order=desc&page={page}'
+        url = f'https://api.github.com/search/repositories?q=language:{self.language}&order=desc&page={page}' \
+              f'&per_page={self.repo_per_page}'
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         data = r.json()
         return data['items']
 
     def get_all_repo_2(self, page):
-        url = f'https://api.github.com/legacy/repos/search/Python?language={self.language}&page={page}&per_page=100'
+        url = f'https://api.github.com/legacy/repos/search/Python?language={self.language}&page={page}&per_page=20'
         r = requests.get(url, headers=self.headers)
         r.raise_for_status()
         data = r.json()
@@ -84,12 +85,27 @@ class GithubDataset:
     # compare
     # https://api.github.com/repos/chriskiehl/Gooey/compare/4990377cc32fabcfc047a5b543625875f247724d...be4b11b8f27f500e7326711641755ad44576d408
     def save(self, location):
-        with open(location, 'w', newline='') as saving_file:
-            writer = csv.writer(saving_file)
-            writer.writerow(['Username', 'Repo', 'Commit', 'Bug', 'Code'])
+        with open(location, 'w', newline='', encoding="utf-8") as saving_file:
+            writer = csv.writer(saving_file, delimiter=';')
+            writer.writerow(['Page', 'Username', 'Repo', 'Commit', 'Bug', 'Code'])
             for data in self.data:
                 writer.writerow(data)
 
+    def load_from_file(self, location):
+        file = open(location)
+        csvreader = csv.reader(file)
+        header = next(csvreader)
+        rows = []
+        for row in csvreader:
+            rows.append(row)
+        file.close()
+        return rows
+
+
+dataset = GithubDataset('python', 900, 'memory')
+dataset.load_commits()
+dataset.save("output\\test3.csv")
+# print(dataset.load_from_file("output\\memory.csv"))
 
 '''
     url = f'https://api.github.com/repos/%7Busername%7D/%7Brepository_name%7D/contents/%7Bfile_path%7D'
