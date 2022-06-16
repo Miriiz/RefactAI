@@ -30,9 +30,26 @@ class GithubDataset:
                         detailed_commit = self.get_commit(repo['owner']['login'], repo['name'], commit['sha'])
                         for file in detailed_commit['files']:
                             if 'patch' in file:
-                                self.data.append([str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
-                                                  commit['commit']['message'], file['patch']])
+                                data_before, data_after = self.clear_file_content(file['patch'])
+                                self.data.append(["KO", str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
+                                                  commit['commit']['message'], data_before])
+                                self.data.append(["OK", str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
+                                                  commit['commit']['message'], data_after])
             self.page += 1
+
+    def clear_file_content(self, file_content):
+        content_file_before = []
+        content_file_after = []
+        start_indice = file_content.find("@@", 4, len(file_content)) + 3
+        for line in file_content[start_indice:].split('\n'):
+            if line[0] == '+':
+                content_file_after.append(line)
+            elif line[0] == '-':
+                content_file_before.append(line)
+            else:
+                content_file_after.append(line)
+                content_file_before.append(line)
+        return '\n'.join(content_file_before), '\n'.join(content_file_after)
 
     def get_all_repo(self, page):
         url = f'https://api.github.com/search/repositories?q=language:{self.language}&order=desc&page={page}' \
@@ -87,7 +104,7 @@ class GithubDataset:
     def save(self, location):
         with open(location, 'w', newline='', encoding="utf-8") as saving_file:
             writer = csv.writer(saving_file, delimiter=';')
-            writer.writerow(['Page', 'Username', 'Repo', 'Commit', 'Bug', 'Code'])
+            writer.writerow(['Label', 'Page', 'Username', 'Repo', 'Commit', 'Bug', 'Code'])
             for data in self.data:
                 writer.writerow(data)
 
@@ -102,9 +119,9 @@ class GithubDataset:
         return rows
 
 
-dataset = GithubDataset('python', 900, 'memory')
+dataset = GithubDataset('python', 100, 'memory')
 dataset.load_commits()
-dataset.save("output\\test3.csv")
+dataset.save("output\\test4.csv")
 # print(dataset.load_from_file("output\\memory.csv"))
 
 '''
