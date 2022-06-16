@@ -1,1 +1,1 @@
-github_token = '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'
+github_token = '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'
