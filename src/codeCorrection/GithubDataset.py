@@ -1,7 +1,10 @@
+import time
+
 import requests
 import csv
 from define import github_token
 from tqdm import tqdm
+from datetime import datetime, timedelta
 
 
 # issue
@@ -35,16 +38,35 @@ class GithubDataset:
             self.page += 1
 
     def get_all_repo(self, page):
-        url = f'https://api.github.com/search/repositories?q=language:{self.language}&order=desc&page={page}' \
-              f'&per_page={self.repo_per_page}'
-        r = requests.get(url, headers=self.headers)
-        r.raise_for_status()
-        data = r.json()
+        since = datetime.today() - timedelta(days=10)  # 10 jours en arriere
+        until = since + timedelta(days=2)  # 8
+        today = datetime.today()
+        data = {'items': []}
+        i = 0
+        while until < today:
+            url = f'https://api.github.com/search/repositories?q=language:{self.language} created:SINCE..UNTIL&order' \
+                  f'=desc&page={page}' \
+                  f'&per_page={self.repo_per_page}'
+            url = url.replace('SINCE', since.strftime('%Y-%m-%dT%H:%M:%SZ')).replace('UNTIL', until.strftime(
+                '%Y-%m-%dT%H:%M:%SZ'))
+            r = requests.get(url)
+            r.raise_for_status()
+            tmp = r.json()
+            if i == 0:
+                data = {**data, **tmp}
+                i += 1
+            else:
+                data["items"].extend(tmp["items"])
+            since = until + timedelta(days=1)
+            until = since + timedelta(days=2)
+            time.sleep(10)
+
         return data['items']
 
     def get_all_repo_2(self, page):
         url = f'https://api.github.com/legacy/repos/search/Python?language={self.language}&page={page}&per_page=20'
         r = requests.get(url, headers=self.headers)
+
         r.raise_for_status()
         data = r.json()
         return data['repositories']
@@ -70,7 +92,7 @@ class GithubDataset:
         data = r.json()
         return data
 
-    # Récupérer tout les fichiers
+    # Récupérer tous les fichiers
     # https://api.github.com/repos/chriskiehl/Gooey/contents
     def get_repo_files(self, owner, name):
         return
@@ -104,7 +126,7 @@ class GithubDataset:
 
 dataset = GithubDataset('python', 900, 'memory')
 dataset.load_commits()
-dataset.save("output\\test3.csv")
+dataset.save("output\\test4.csv")
 # print(dataset.load_from_file("output\\memory.csv"))
 
 '''
