@@ -9,13 +9,14 @@ from datetime import datetime, timedelta
 
 # issue
 class GithubDataset:
-    def __init__(self, language, number_of_repo, searching_word):
+    def __init__(self, language, number_of_repo, searching_word, day_since):
         self.headers = {'Authorization': f'token {github_token}'}
         self.language = language
         self.number_of_repo = number_of_repo
         self.searching_word = searching_word
         self.data = []
         self.page = 1
+        self.day_since = day_since
         self.repo_per_page = 20
         if number_of_repo < 20:
             self.repo_per_page = number_of_repo
@@ -38,12 +39,13 @@ class GithubDataset:
             self.page += 1
 
     def get_all_repo(self, page):
-        since = datetime.today() - timedelta(days=10)  # 10 jours en arriere
-        until = since + timedelta(days=2)  # 8
+        # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
+        since = datetime.today() - timedelta(days=self.day_since)  # X jours en arriere
+        until = since + timedelta(days=1)  # X + 1 jour en arriere
         today = datetime.today()
         data = {'items': []}
         i = 0
-        while until < today:
+        while tqdm(until < today):
             url = f'https://api.github.com/search/repositories?q=language:{self.language} created:SINCE..UNTIL&order' \
                   f'=desc&page={page}' \
                   f'&per_page={self.repo_per_page}'
@@ -57,8 +59,8 @@ class GithubDataset:
                 i += 1
             else:
                 data["items"].extend(tmp["items"])
-            since = until + timedelta(days=1)
-            until = since + timedelta(days=2)
+            since = until
+            until = since + timedelta(days=1)
             time.sleep(10)
 
         return data['items']
@@ -124,7 +126,7 @@ class GithubDataset:
         return rows
 
 
-dataset = GithubDataset('python', 900, 'memory')
+dataset = GithubDataset('python', 900, 'memory', 90)
 dataset.load_commits()
 dataset.save("output\\test4.csv")
 # print(dataset.load_from_file("output\\memory.csv"))
