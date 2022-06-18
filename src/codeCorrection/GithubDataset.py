@@ -29,6 +29,8 @@ class GithubDataset:
             repos = self.get_all_repo(self.page)
             for repo in repos:
                 commits = self.get_all_commits(repo['owner']['login'], repo['name'])
+                if isinstance(commits, list):
+                    continue
                 for commit in commits:
                     if self.searching_word in commit['commit']['message']:
                         detailed_commit = self.get_commit(repo['owner']['login'], repo['name'], commit['sha'])
