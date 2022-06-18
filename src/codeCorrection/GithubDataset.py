@@ -57,9 +57,9 @@ class GithubDataset:
 
     def get_all_repo(self, page):
         # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
-        since = datetime.today() - timedelta(days=self.day_since)  # X jours en arriere
+        since = datetime.today()  # X jours en arriere
         until = since + timedelta(days=1)  # X + 1 jour en arriere
-        today = datetime.today()   # X + 1 jour en arriere
+        today = datetime.today() - timedelta(days=30)  # X + 1 jour en arriere
         data = {'items': []}
         i = 0
         while tqdm(until < today):
