@@ -65,7 +65,7 @@ class GithubDataset:
         # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
         since = datetime.today() - timedelta(days=self.day_since)  # X jours en arriere
         until = since + timedelta(days=1)  # X + 1 jour en arriere
-        today = datetime.today()   # X + 1 jour en arriere
+        today = datetime.today() - timedelta(days=90)
         data = {'items': []}
         i = 0
         while until < today:
@@ -158,10 +158,10 @@ class GithubDataset:
         return x_train, y_train
 
 
-#dataset = GithubDataset('python', 900, 'memory', 5)
-#dataset.load_commits()
-#dataset.save("output\\test5.csv")
-# print(dataset.load_from_file("output\\memory.csv"))
+dataset = GithubDataset('python', 900, 'memory', 150)
+dataset.load_commits()
+dataset.save("output\\test5.csv")
+print(dataset.load_from_file("output\\test5.csv"))
 
 '''
     url = f'https://api.github.com/repos/%7Busername%7D/%7Brepository_name%7D/contents/%7Bfile_path%7D'
