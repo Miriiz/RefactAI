@@ -24,16 +24,20 @@ class GithubDataset:
     def load_commits(self, start_at=1):
         i = 0
         self.page = start_at
+
         number_of_pages = int(self.number_of_repo / self.repo_per_page)
         for i in tqdm(range(number_of_pages)):
             repos = self.get_all_repo(self.page)
             for repo in repos:
                 commits = self.get_all_commits(repo['owner']['login'], repo['name'])
-                if isinstance(commits, list):
+                if not isinstance(commits, list):
+                    print("commits not found")
                     continue
                 for commit in commits:
                     if self.searching_word in commit['commit']['message']:
                         detailed_commit = self.get_commit(repo['owner']['login'], repo['name'], commit['sha'])
+                        if detailed_commit is None:
+                            continue
                         for file in detailed_commit['files']:
                             if 'patch' in file:
                                 data_before, data_after = self.clear_file_content(file['patch'])
@@ -64,7 +68,7 @@ class GithubDataset:
         today = datetime.today()   # X + 1 jour en arriere
         data = {'items': []}
         i = 0
-        while tqdm(until < today):
+        while until < today:
             url = f'https://api.github.com/search/repositories?q=language:{self.language} created:SINCE..UNTIL&order' \
                   f'=desc&page={page}' \
                   f'&per_page={self.repo_per_page}'
@@ -84,14 +88,6 @@ class GithubDataset:
 
         return data['items']
 
-    def get_all_repo_2(self, page):
-        url = f'https://api.github.com/legacy/repos/search/Python?language={self.language}&page={page}&per_page=20'
-        r = requests.get(url, headers=self.headers)
-
-        r.raise_for_status()
-        data = r.json()
-        return data['repositories']
-
     def get_repo(self, owner, name):
         url = f'https://api.github.com/repos/{owner}/{name}'
         r = requests.get(url, headers=self.headers)
@@ -102,16 +98,23 @@ class GithubDataset:
     def get_all_commits(self, owner, name):
         url = f'https://api.github.com/repos/{owner}/{name}/commits'
         r = requests.get(url, headers=self.headers)
-        r.raise_for_status()
-        data = r.json()
-        return data
+        try:
+            r.raise_for_status()
+            data = r.json()
+            return data
+        except requests.exceptions.HTTPError:
+            return None
 
     def get_commit(self, owner, name, commit_sha):
         url = f'https://api.github.com/repos/{owner}/{name}/commits/{commit_sha}'
         r = requests.get(url, headers=self.headers)
-        r.raise_for_status()
-        data = r.json()
-        return data
+        try:
+            r.raise_for_status()
+            data = r.json()
+            return data
+        except requests.exceptions.HTTPError:
+            return None
+
 
     # Récupérer tous les fichiers
     # https://api.github.com/repos/chriskiehl/Gooey/contents
@@ -135,19 +138,29 @@ class GithubDataset:
                 writer.writerow(data)
 
     def load_from_file(self, location):
-        file = open(location)
-        csvreader = csv.reader(file)
-        header = next(csvreader)
-        rows = []
+        file = open(location, encoding="utf-8")
+        csvreader = csv.DictReader(file, delimiter=';')
+        #header = next(csvreader)
+        result = {}
+        x_train = []
+        y_train = []
         for row in csvreader:
-            rows.append(row)
+            for column, value in row.items():
+                result.setdefault(column, []).append(value)
         file.close()
-        return rows
+        for label in result['Label']:
+            if label == 'OK':
+                y_train.append(1)
+            elif label == 'KO':
+                y_train.append(0)
+        for code in result['Code']:
+            x_train.append(code)
+        return x_train, y_train
 
 
-dataset = GithubDataset('python', 900, 'memory', 60)
-dataset.load_commits()
-dataset.save("output\\test4.csv")
+#dataset = GithubDataset('python', 900, 'memory', 5)
+#dataset.load_commits()
+#dataset.save("output\\test5.csv")
 # print(dataset.load_from_file("output\\memory.csv"))
 
 '''

@@ -45,7 +45,7 @@ def getFileFromDir(currentPath):
     newCurrentRep.append(currentPath)
     for r in rep:
         if r != currentPath:
-            newCurrentRep.append(currentPath + r)
+            newCurrentRep.append(currentPath + "\\" + r)
     file = []
     for r in newCurrentRep:
         files = os.listdir(r)
