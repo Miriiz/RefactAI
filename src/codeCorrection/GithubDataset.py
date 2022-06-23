@@ -1,6 +1,7 @@
 import time
 
 import requests
+import pandas as pd
 import csv
 from define import github_token
 from tqdm import tqdm
@@ -99,29 +100,6 @@ class GithubDataset:
         return data
 
     def get_all_commits(self, owner, name):
-<<<<<<< HEAD
-        try:
-            url = f'https://api.github.com/repos/{owner}/{name}/commits'
-            r = requests.get(url, headers=self.headers)
-            r.raise_for_status()
-            data = r.json()
-        except:
-            print("Error")
-            return []
-        return data
-
-    def get_commit(self, owner, name, commit_sha):
-        try:
-            url = f'https://api.github.com/repos/{owner}/{name}/commits/{commit_sha}'
-            r = requests.get(url, headers=self.headers)
-            r.raise_for_status()
-            data = r.json()
-        except:
-            print("Error when trying to get commit")
-            return []
-
-        return data
-=======
         url = f'https://api.github.com/repos/{owner}/{name}/commits'
         r = requests.get(url, headers=self.headers)
         try:
@@ -129,6 +107,7 @@ class GithubDataset:
             data = r.json()
             return data
         except requests.exceptions.HTTPError:
+            print(f"commits not found")
             return None
 
     def get_commit(self, owner, name, commit_sha):
@@ -139,9 +118,8 @@ class GithubDataset:
             data = r.json()
             return data
         except requests.exceptions.HTTPError:
+            print(f"commit {commit_sha} not found")
             return None
-
->>>>>>> 3956da733f3f849398025c3a72a3adb460549320
 
     # Récupérer tous les fichiers
     # https://api.github.com/repos/chriskiehl/Gooey/contents
@@ -167,7 +145,7 @@ class GithubDataset:
     def load_from_file(self, location):
         file = open(location, encoding="utf-8")
         csvreader = csv.DictReader(file, delimiter=';')
-        #header = next(csvreader)
+        # header = next(csvreader)
         result = {}
         x_train = []
         y_train = []
@@ -185,15 +163,20 @@ class GithubDataset:
         return x_train, y_train
 
 
-j = 2
-for i in range(0, 90, 10):
-    dataset = GithubDataset('python', 900, 'memory', 5 + i, 0 + i)
+j = 0
+for i in range(0, 300, 10):
+    dataset = GithubDataset('python', 900, 'memory', 45 + i, 35 + i)
     dataset.load_commits()
     dataset.save('output\\dataset_{j}.csv'.format(j=j))
     j += 1
 
-# print(dataset.load_from_file("output\\dataset_1.csv"))
-
+# li = []
+# for filename in x:
+#     df = pd.read_csv(filename, index_col=None,sep=";",header=0)
+#     li.append(df)
+#
+# frame = pd.concat(li, axis=0, ignore_index=True)
+# frame.to_csv('output\\dataset_all.csv', sep=';', index=False)
 '''
 
     url = f'https://api.github.com/repos/%7Busername%7D/%7Brepository_name%7D/contents/%7Bfile_path%7D'
