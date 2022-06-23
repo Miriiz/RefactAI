@@ -1,6 +1,7 @@
 def getMaxFromArr(arr):
     return max(arr)
 
+
 def getDiscountAmount(products):
     sum = sum(products)
     if sum > 75:
