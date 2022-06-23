@@ -51,7 +51,6 @@ def getFileFromDir(currentPath):
             for it in os.scandir(currentPath + '/' + r):
                 if it.is_dir():
                     newCurrentRep.append(it.path)
-
     file = []
     for r in newCurrentRep:
         files = os.listdir(r)
