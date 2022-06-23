@@ -1,5 +1,4 @@
 import itertools
-
 from src.docGeneration.utils.function import *
 
 if __name__ == '__main__':

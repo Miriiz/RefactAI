@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 
 # issue
 class GithubDataset:
-    def __init__(self, language, number_of_repo, searching_word, day_since):
+    def __init__(self, language, number_of_repo, searching_word, day_since, today_remove=0):
         self.headers = {'Authorization': f'token {github_token}'}
         self.language = language
         self.number_of_repo = number_of_repo
@@ -18,6 +18,7 @@ class GithubDataset:
         self.page = 1
         self.day_since = day_since
         self.repo_per_page = 20
+        self.today_remove = today_remove
         if number_of_repo < 20:
             self.repo_per_page = number_of_repo
 
@@ -37,10 +38,12 @@ class GithubDataset:
                         for file in detailed_commit['files']:
                             if 'patch' in file:
                                 data_before, data_after = self.clear_file_content(file['patch'])
-                                self.data.append(["KO", str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
-                                                  commit['commit']['message'], data_before])
-                                self.data.append(["OK", str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
-                                                  commit['commit']['message'], data_after])
+                                self.data.append(
+                                    ["KO", str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
+                                     commit['commit']['message'], data_before])
+                                self.data.append(
+                                    ["OK", str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
+                                     commit['commit']['message'], data_after])
             self.page += 1
 
     def clear_file_content(self, file_content):
@@ -61,10 +64,10 @@ class GithubDataset:
         # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
         since = datetime.today() - timedelta(days=self.day_since)  # X jours en arriere
         until = since + timedelta(days=1)  # X + 1 jour en arriere
-        today = datetime.today() - timedelta(days=90)
+        today = datetime.today() - timedelta(days=self.today_remove)
         data = {'items': []}
         i = 0
-        while tqdm(until < today):
+        while until < today:
             url = f'https://api.github.com/search/repositories?q=language:{self.language} created:SINCE..UNTIL&order' \
                   f'=desc&page={page}' \
                   f'&per_page={self.repo_per_page}'
@@ -100,17 +103,26 @@ class GithubDataset:
         return data
 
     def get_all_commits(self, owner, name):
-        url = f'https://api.github.com/repos/{owner}/{name}/commits'
-        r = requests.get(url, headers=self.headers)
-        r.raise_for_status()
-        data = r.json()
+        try:
+            url = f'https://api.github.com/repos/{owner}/{name}/commits'
+            r = requests.get(url, headers=self.headers)
+            r.raise_for_status()
+            data = r.json()
+        except:
+            print("Error")
+            return []
         return data
 
     def get_commit(self, owner, name, commit_sha):
-        url = f'https://api.github.com/repos/{owner}/{name}/commits/{commit_sha}'
-        r = requests.get(url, headers=self.headers)
-        r.raise_for_status()
-        data = r.json()
+        try:
+            url = f'https://api.github.com/repos/{owner}/{name}/commits/{commit_sha}'
+            r = requests.get(url, headers=self.headers)
+            r.raise_for_status()
+            data = r.json()
+        except:
+            print("Error when trying to get commit")
+            return []
+
         return data
 
     # Récupérer tous les fichiers
@@ -122,11 +134,11 @@ class GithubDataset:
     # https://api.github.com/repos/chriskiehl/Gooey/contents/pip_deploy.py?ref=master
     # -> git_url : https://api.github.com/repos/chriskiehl/Gooey/git/blobs/3a8710f0319f5d8ad3bf1199906bb4958781dfda
 
-    # issues
-    # https://api.github.com/repos/chriskiehl/Gooey/issues
-    # https://api.github.com/repos/chriskiehl/Gooey/issues/816 / https://api.github.com/repos/chriskiehl/Gooey/issues/816/comments
-    # compare
-    # https://api.github.com/repos/chriskiehl/Gooey/compare/4990377cc32fabcfc047a5b543625875f247724d...be4b11b8f27f500e7326711641755ad44576d408
+    # issues https://api.github.com/repos/chriskiehl/Gooey/issues
+    # https://api.github.com/repos/chriskiehl/Gooey/issues/816 /
+    # https://api.github.com/repos/chriskiehl/Gooey/issues/816/comments compare
+    # https://api.github.com/repos/chriskiehl/Gooey/compare/4990377cc32fabcfc047a5b543625875f247724d
+    # ...be4b11b8f27f500e7326711641755ad44576d408
     def save(self, location):
         with open(location, 'w', newline='', encoding="utf-8") as saving_file:
             writer = csv.writer(saving_file, delimiter=';')
@@ -145,12 +157,17 @@ class GithubDataset:
         return rows
 
 
-dataset = GithubDataset('python', 900, 'memory', 150)
-dataset.load_commits()
-dataset.save("output\\test5.csv")
-print(dataset.load_from_file("output\\test5.csv"))
+j = 2
+for i in range(0, 90, 10):
+    dataset = GithubDataset('python', 900, 'memory', 5 + i, 0 + i)
+    dataset.load_commits()
+    dataset.save('output\\dataset_{j}.csv'.format(j=j))
+    j += 1
+
+# print(dataset.load_from_file("output\\dataset_1.csv"))
 
 '''
+
     url = f'https://api.github.com/repos/%7Busername%7D/%7Brepository_name%7D/contents/%7Bfile_path%7D'
     r = requests.get(url, headers=headers)
     r.raise_for_status()
