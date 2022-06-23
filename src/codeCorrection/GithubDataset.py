@@ -167,13 +167,15 @@ class GithubDataset:
             x_train.append(code)
         return x_train, y_train
 
+
+'''
 j = 0
-for i in range(0, 300, 10):
-    dataset = GithubDataset('python', 900, ['memory', 'error'], 45 + i, 35 + i)
+for i in range(0, 100, 10):
+    dataset = GithubDataset('python', 900, ['numpy', 'optimization'], 5 + i, 0 + i)
     dataset.load_commits()
     dataset.save('output\\dataset_{j}.csv'.format(j=j))
     j += 1
-
+'''
 # li = []
 # for filename in x:
 #     df = pd.read_csv(filename, index_col=None,sep=";",header=0)
@@ -181,14 +183,3 @@ for i in range(0, 300, 10):
 #
 # frame = pd.concat(li, axis=0, ignore_index=True)
 # frame.to_csv('output\\dataset_all.csv', sep=';', index=False)
-'''
-
-    url = f'https://api.github.com/repos/%7Busername%7D/%7Brepository_name%7D/contents/%7Bfile_path%7D'
-    r = requests.get(url, headers=headers)
-    r.raise_for_status()
-    data = r.json()
-    file_content = data['content']
-    file_content_encoding = data.get('encoding')
-    if file_content_encoding == 'base64':
-        file_content = base64.b64decode(file_content).decode()
-'''
