@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 
 # issue
 class GithubDataset:
-    def __init__(self, language, number_of_repo, searching_word, day_since, today_remove=0):
+    def __init__(self, language, number_of_repo, searching_words, day_since, today_remove=0):
         self.headers = {'Authorization': f'token {github_token}'}
         self.language = language
         self.number_of_repo = number_of_repo
-        self.searching_word = searching_word
+        self.searching_words = searching_words
         self.data = []
         self.page = 1
         self.day_since = day_since
@@ -36,7 +36,12 @@ class GithubDataset:
                     print("commits not found")
                     continue
                 for commit in commits:
-                    if self.searching_word in commit['commit']['message']:
+                    can_get_commit = True
+                    for searching_word in self.searching_words:
+                        if searching_word not in commit['commit']['message']:
+                            can_get_commit = False
+
+                    if can_get_commit:
                         detailed_commit = self.get_commit(repo['owner']['login'], repo['name'], commit['sha'])
                         if detailed_commit is None:
                             continue
@@ -162,10 +167,9 @@ class GithubDataset:
             x_train.append(code)
         return x_train, y_train
 
-
 j = 0
 for i in range(0, 300, 10):
-    dataset = GithubDataset('python', 900, 'memory', 45 + i, 35 + i)
+    dataset = GithubDataset('python', 900, ['memory', 'error'], 45 + i, 35 + i)
     dataset.load_commits()
     dataset.save('output\\dataset_{j}.csv'.format(j=j))
     j += 1
