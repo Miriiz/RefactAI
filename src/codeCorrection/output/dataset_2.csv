@@ -1,0 +1,548 @@
+Label;Page;Username;Repo;Commit;Bug;Code
+KO;1;lucidrains;perceiver-ar-pytorch;be3765300f5aae03b779edf0e256b7a74bda5fc8;allow for processing heads in chunks in the initial cross attention layer, to save on peak memory;"def __init__(
+         dim,
+         dim_head = 64,
+         heads = 8,
+         dropout = 0.
+     ):
+         super().__init__()
+         self.scale = dim_head ** -0.5
+         self.heads = heads
+         inner_dim = heads * dim_head
+ 
+         self.norm = nn.LayerNorm(dim)
+@@ -138,25 +141,43 @@ def forward(self, x, context, context_mask = None, rotary_pos_emb = None):
+             q = apply_rotary_pos_emb(rotary_pos_emb, q)
+             k = apply_rotary_pos_emb(rotary_pos_emb, k)
+ 
+-        sim = einsum('b h i d, b h j d -> b h i j', q, k)
+-
+-        i, j = sim.shape[-2:]
+ 
+-        mask_value = -torch.finfo(sim.dtype).max
+ 
+         if exists(context_mask):
+             mask_len = context_mask.shape[-1]
+             context_mask = F.pad(context_mask, (0, max(j - mask_len, 0)), value = True)
+             context_mask = rearrange(context_mask, 'b j -> b 1 1 j')
+-            sim = sim.masked_fill(~context_mask, mask_value)
+ 
+         causal_mask = torch.ones((i, j), device = x.device, dtype = torch.bool).triu(j - i + 1)
+-        sim = sim.masked_fill(causal_mask, mask_value)
+ 
+-        attn = sim.softmax(dim = -1)
+-        attn = self.dropout(attn)
+ 
+-        out = einsum('b h i j, b h j d -> b h i d', attn, v)
+ 
+         out = rearrange(out, 'b h n d -> b n (h d)')
+ 
+@@ -175,7 +196,8 @@ def __init__(
+         heads = 8,
+         dropout = 0.,
+         ff_mult = 4,
+-        perceive_depth = 1
+     ):
+         super().__init__()
+         assert max_seq_len > cross_attn_seq_len, 'max_seq_len must be greater than cross_attn_seq_len, the length of the sequence for which to cross attend to ""perceiver"" style'
+@@ -191,7 +213,7 @@ def __init__(
+ 
+         for _ in range(perceive_depth):
+             self.perceive_layers.append(nn.ModuleList([
+-                CausalPrefixAttention(dim = dim, dim_head = dim_head, heads = heads, dropout = dropout),
+                 FeedForward(dim, mult = ff_mult, dropout = dropout)
+             ]))
+ "
+OK;1;lucidrains;perceiver-ar-pytorch;be3765300f5aae03b779edf0e256b7a74bda5fc8;allow for processing heads in chunks in the initial cross attention layer, to save on peak memory;"def __init__(
+         dim,
+         dim_head = 64,
+         heads = 8,
++        max_heads_process = 2,
+         dropout = 0.
+     ):
+         super().__init__()
+         self.scale = dim_head ** -0.5
+         self.heads = heads
++        self.max_heads_process = max_heads_process
++
+         inner_dim = heads * dim_head
+ 
+         self.norm = nn.LayerNorm(dim)
+@@ -138,25 +141,43 @@ def forward(self, x, context, context_mask = None, rotary_pos_emb = None):
+             q = apply_rotary_pos_emb(rotary_pos_emb, q)
+             k = apply_rotary_pos_emb(rotary_pos_emb, k)
+ 
++        # take care of masking
+ 
++        i, j = q.shape[-2], k.shape[-2]
++        mask_value = -torch.finfo(q.dtype).max
+ 
+         if exists(context_mask):
+             mask_len = context_mask.shape[-1]
+             context_mask = F.pad(context_mask, (0, max(j - mask_len, 0)), value = True)
+             context_mask = rearrange(context_mask, 'b j -> b 1 1 j')
+ 
+         causal_mask = torch.ones((i, j), device = x.device, dtype = torch.bool).triu(j - i + 1)
+ 
++        # process in chunks of heads
+ 
++        out = []
++
++        max_heads = self.max_heads_process
++
++        for q_chunk, k_chunk, v_chunk in zip(q.split(max_heads, dim = 1), k.split(max_heads, dim = 1), v.split(max_heads, dim = 1)):
++            sim = einsum('b h i d, b h j d -> b h i j', q_chunk, k_chunk)
++
++            if exists(context_mask):
++                sim = sim.masked_fill(~context_mask, mask_value)
++
++            sim = sim.masked_fill(causal_mask, mask_value)
++
++            attn = sim.softmax(dim = -1)
++            attn = self.dropout(attn)
++
++            out_chunk = einsum('b h i j, b h j d -> b h i d', attn, v_chunk)
++            out.append(out_chunk)
++
++        # concat all the heads together
++
++        out = torch.cat(out, dim = 1)
++
++        # merge heads and then combine with linear
+ 
+         out = rearrange(out, 'b h n d -> b n (h d)')
+ 
+@@ -175,7 +196,8 @@ def __init__(
+         heads = 8,
+         dropout = 0.,
+         ff_mult = 4,
++        perceive_depth = 1,
++        perceive_max_heads_process = 2 # processes the heads in the perceiver layer in chunks to lower peak memory, in the case the prefix is really long
+     ):
+         super().__init__()
+         assert max_seq_len > cross_attn_seq_len, 'max_seq_len must be greater than cross_attn_seq_len, the length of the sequence for which to cross attend to ""perceiver"" style'
+@@ -191,7 +213,7 @@ def __init__(
+ 
+         for _ in range(perceive_depth):
+             self.perceive_layers.append(nn.ModuleList([
++                CausalPrefixAttention(dim = dim, dim_head = dim_head, heads = heads, max_heads_process = perceive_max_heads_process, dropout = dropout),
+                 FeedForward(dim, mult = ff_mult, dropout = dropout)
+             ]))
+ "
+KO;9;tigert1998;opcounter;22d1dcd3aef379f4ac69e7b47602e05e9b87cd83;Fix incorrect memory calculation for Conv2DForwardHook;"def func(module, input_tensors, output_tensors):
+             muladds = b * module.out_channels * out_h * out_w * \
+                 module.kernel_size[0] * \
+                 module.kernel_size[1] * module.in_channels
+-            mem = 4 * (b * module.in_channels * h * w + np.prod(module.kernel_size) +
+                        b * module.out_channels * out_h * out_w)
+             dst[""muladds""] = dst.get(""muladds"", 0) + muladds
+             dst[""mem""] = dst.get(""mem"", 0) + mem"
+OK;9;tigert1998;opcounter;22d1dcd3aef379f4ac69e7b47602e05e9b87cd83;Fix incorrect memory calculation for Conv2DForwardHook;"def func(module, input_tensors, output_tensors):
+             muladds = b * module.out_channels * out_h * out_w * \
+                 module.kernel_size[0] * \
+                 module.kernel_size[1] * module.in_channels
++            mem = 4 * (b * module.in_channels * h * w + np.prod(module.weight.shape) +
+                        b * module.out_channels * out_h * out_w)
+             dst[""muladds""] = dst.get(""muladds"", 0) + muladds
+             dst[""mem""] = dst.get(""mem"", 0) + mem"
+KO;9;tigert1998;opcounter;eaf23a36b72320a82dc5540a9eb0a16994448350;Modify opcounter to use byte as memory unit;" from opcounter.hooks import *
+ 
+ if __name__ == ""__main__"":
+-    model = resnet18(pretrained=True)
+     input_tuple = (torch.randn(1, 3, 224, 224),)
+     dst = counter(model, input_tuple, [
+         Conv2DForwardHook(),"
+OK;9;tigert1998;opcounter;eaf23a36b72320a82dc5540a9eb0a16994448350;Modify opcounter to use byte as memory unit;" from opcounter.hooks import *
+ 
+ if __name__ == ""__main__"":
++    model = resnet50(pretrained=True)
+     input_tuple = (torch.randn(1, 3, 224, 224),)
+     dst = counter(model, input_tuple, [
+         Conv2DForwardHook(),"
+KO;9;tigert1998;opcounter;eaf23a36b72320a82dc5540a9eb0a16994448350;Modify opcounter to use byte as memory unit;"def func(module, input_tensors, output_tensors):
+             muladds = b * module.out_channels * out_h * out_w * \
+                 module.kernel_size[0] * \
+                 module.kernel_size[1] * module.in_channels
+-            mem = b * module.in_channels * h * w + np.prod(module.kernel_size) + \
+-                b * module.out_channels * out_h * out_w
+             dst[""muladds""] = dst.get(""muladds"", 0) + muladds
+             dst[""mem""] = dst.get(""mem"", 0) + mem
+ 
+@@ -35,7 +35,8 @@ def func(module, input_tensors, output_tensors):
+             in_features, out_features = module.in_features, module.out_features
+             b, _ = input_tensors[0].shape
+             muladds = b * in_features * out_features
+-            mem = b * in_features + b * out_features + in_features * out_features
+             dst[""muladds""] = dst.get(""muladds"", 0) + muladds
+             dst[""mem""] = dst.get(""mem"", 0) + mem
+         return func"
+OK;9;tigert1998;opcounter;eaf23a36b72320a82dc5540a9eb0a16994448350;Modify opcounter to use byte as memory unit;"def func(module, input_tensors, output_tensors):
+             muladds = b * module.out_channels * out_h * out_w * \
+                 module.kernel_size[0] * \
+                 module.kernel_size[1] * module.in_channels
++            mem = 4 * (b * module.in_channels * h * w + np.prod(module.kernel_size) +
++                       b * module.out_channels * out_h * out_w)
+             dst[""muladds""] = dst.get(""muladds"", 0) + muladds
+             dst[""mem""] = dst.get(""mem"", 0) + mem
+ 
+@@ -35,7 +35,8 @@ def func(module, input_tensors, output_tensors):
+             in_features, out_features = module.in_features, module.out_features
+             b, _ = input_tensors[0].shape
+             muladds = b * in_features * out_features
++            mem = 4 * (b * in_features + b * out_features +
++                       in_features * out_features)
+             dst[""muladds""] = dst.get(""muladds"", 0) + muladds
+             dst[""mem""] = dst.get(""mem"", 0) + mem
+         return func"
+KO;16;Gaborade;Janus;a4f3164d1991a0a008135af7ef03c1ae8d5e2061;experiment: tracemalloc for memory tracing;"benchmark.py
+ index.py
+ store_keys.txt
+ b-tree.py"
+OK;16;Gaborade;Janus;a4f3164d1991a0a008135af7ef03c1ae8d5e2061;experiment: tracemalloc for memory tracing;"benchmark.py
+ index.py
+ store_keys.txt
+ b-tree.py
++storemmap.txt
++exper.py"
+KO;16;Gaborade;Janus;a4f3164d1991a0a008135af7ef03c1ae8d5e2061;experiment: tracemalloc for memory tracing;"def commands_cli():
+         else:
+             command_split = command.split()
+             command_len = len(command_split)
+             if command_len < 2:
+                 print(""Few arguments given"", file=sys.stderr)
+             elif command_len > 3:
+                 print(""Too many arguments"", file=sys.stderr)
+-
+-            if command_split[0] not in DATABASE_COMMANDS:
+-                print(""Command not supported"", file=sys.stderr)
+             else:
+-                # socket is re-initialised everytime
+-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+-                    try:
+-                        sock.connect((HOST, PORT))
+-                    except ConnectionRefusedError:
+-                        raise ConnectionRefusedError(""Cannot connect to host server, perhaps start db server"")
+-                    sock.sendall(bytes(command + ""\n"", ""utf-8""))
+-                    response = str(sock.recv(1024), ""utf-8"")
+-                    print(response)
+ 
+ 
+ if __name__ == ""__main__"":"
+OK;16;Gaborade;Janus;a4f3164d1991a0a008135af7ef03c1ae8d5e2061;experiment: tracemalloc for memory tracing;"def commands_cli():
+         else:
+             command_split = command.split()
+             command_len = len(command_split)
++
+             if command_len < 2:
+                 print(""Few arguments given"", file=sys.stderr)
+             elif command_len > 3:
+                 print(""Too many arguments"", file=sys.stderr)
+             else:
++
++                if command_split[0] not in DATABASE_COMMANDS:
++                    print(""Command not supported"", file=sys.stderr)
++                else:
++                    # socket is re-initialised everytime
++                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
++                        try:
++                            sock.connect((HOST, PORT))
++                        except ConnectionRefusedError:
++                            raise ConnectionRefusedError(""Cannot connect to host server, perhaps start db server"")
++                        sock.sendall(bytes(command + ""\n"", ""utf-8""))
++                        response = str(sock.recv(1024), ""utf-8"")
++                        print(response)
+ 
+ 
+ if __name__ == ""__main__"":"
+KO;16;Gaborade;Janus;a4f3164d1991a0a008135af7ef03c1ae8d5e2061;experiment: tracemalloc for memory tracing;"def __init__(self, use_btrees=False):
+ 
+     def insert(self, key, value):
+         with open(self.STORE_KEYS_FILE, mode=""a"") as file:
+-            file.write(f""{key} {value} \n"")
+-            logger.info(f""{key} set in db"")
+     
+     def retrieve(self, key):
+         if not self.use_btrees:
+             with open(self.STORE_KEYS_FILE, mode=""r"") as file:
+-                keys = file.readlines()
+-                for line in keys:
+                     if line.startswith(key):
+                         value = re.split(r'(\n|\s)', line)[2]
+                         return value
+ 
+     def update(self, key, new_value):
+         if not self.use_btrees:
+             with open(self.STORE_KEYS_FILE) as file:
+-                keys = file.readlines()
+-                for line in keys:
+                     if line.startswith(key):
+                         # line.replace
+                         pass
+ "
+OK;16;Gaborade;Janus;a4f3164d1991a0a008135af7ef03c1ae8d5e2061;experiment: tracemalloc for memory tracing;"def __init__(self, use_btrees=False):
+ 
+     def insert(self, key, value):
+         with open(self.STORE_KEYS_FILE, mode=""a"") as file:
++            try:
++                file.write(f""{key} {value} \n"")
++                logger.info(f""{key} set in db"")
++                return True
++            except Exception:
++                logger.error(f""[ATTEMPT-FAIL] {key} could not be set in db"")
++                return False
+     
+     def retrieve(self, key):
+         if not self.use_btrees:
+             with open(self.STORE_KEYS_FILE, mode=""r"") as file:
++                data = file.readlines()
++                for line in data:
+                     if line.startswith(key):
+                         value = re.split(r'(\n|\s)', line)[2]
+                         return value
+ 
+     def update(self, key, new_value):
+         if not self.use_btrees:
+             with open(self.STORE_KEYS_FILE) as file:
++                data = file.readlines()
++                for line in data:
+                     if line.startswith(key):
+                         # line.replace
+                         pass
+ 
++    def delete(self, key):
++        if not self.use_btrees:
++            with open(self.STORE_KEYS_FILE) as file:
++                data = file.readlines()
++                for line in data:
++                    if line.startswith(key):
++                        pass
++"
+KO;16;Gaborade;Janus;a4f3164d1991a0a008135af7ef03c1ae8d5e2061;experiment: tracemalloc for memory tracing;" from keys import Key
+ import os
+ 
+ class TCPServerHandler(socketserver.StreamRequestHandler):
+ 
+     def handle(self):
+         db = Key()
+         self.data = self.rfile.readline().strip().decode()
+         command_split = self.data.split()
+ 
+         if len(command_split) == 3:
+@@ -18,28 +34,43 @@ def handle(self):
+         elif len(command_split) == 2:
+             db_command, key = command_split
+             command_len = 2
+-
+-        if hasattr(db, f""{db_command}""):
+             command = getattr(db, f""{db_command}"")
+             if command_len == 3:
+-                command(key, value)
+-                self.wfile.write(""0"".encode())
+             elif command_len == 2:
+-                get_key = command(key)
+-                self.wfile.write(f""{get_key}"".encode())
+ 
+ 
+ if __name__ == ""__main__"":
+     HOST, PORT = ""localhost"", 4000
+ 
+     with socketserver.TCPServer((HOST, PORT), TCPServerHandler) as server:
+         try:
+             process_id = os.getpid()
+             logger.info(f""Starting process id {process_id}"")
+-            logger.info(f""Key value db server starting, address={HOST}:{PORT}"")
+             server.serve_forever()
+ 
+-        except BaseException:
+             logger.info(f""Closing process id {process_id}"")
+             logger.info(f""Key value db server shutting down"")
+             sys.exit()"
+OK;16;Gaborade;Janus;a4f3164d1991a0a008135af7ef03c1ae8d5e2061;experiment: tracemalloc for memory tracing;" from keys import Key
+ import os
+ 
++# experiment with tracemalloc
++import tracemalloc
++tracemalloc.start()
++
++
++def memory_trace(limit=10):
++    print(""-"" *70)
++    print(""-"" * 70)
++    print(""-------------------------MEMORY USAGE----------------------------"")
++    snapshot = tracemalloc.take_snapshot()
++    memory_stats = snapshot.statistics(""lineno"")
++    for stat in memory_stats[:limit]:
++        print(stat)
++   
++
+ class TCPServerHandler(socketserver.StreamRequestHandler):
+ 
+     def handle(self):
+         db = Key()
+         self.data = self.rfile.readline().strip().decode()
++        logger.info(f""Message sent by key db cli client with address {self.client_address[0]}:{self.client_address[1]}"")
+         command_split = self.data.split()
+ 
+         if len(command_split) == 3:
+@@ -18,28 +34,43 @@ def handle(self):
+         elif len(command_split) == 2:
+             db_command, key = command_split
+             command_len = 2
++        
++        # callable to make sure no key db attributes which are not methods are called by getattr
++        if hasattr(db, f""{db_command}"") and callable(getattr(db, f""{db_command}"")):
+             command = getattr(db, f""{db_command}"")
+             if command_len == 3:
++                if command(key, value):
++                    self.wfile.write(""0"".encode())
+             elif command_len == 2:
++                get_value = command(key)
++                self.wfile.write(f""{get_value}"".encode())
+ 
+ 
+ if __name__ == ""__main__"":
+     HOST, PORT = ""localhost"", 4000
++    SERVER_IP_ADDR = ""127.0.0.1"" if HOST == ""localhost"" else HOST   
++    try:
++        DEBUG = sys.argv[1] if sys.argv[1] == ""debug"" else False
++    except IndexError:
++        DEBUG = False
+ 
+     with socketserver.TCPServer((HOST, PORT), TCPServerHandler) as server:
+         try:
+             process_id = os.getpid()
++            if DEBUG:
++                logger.info(""DEBUG=ON"")
++            else:
++                logger.info(""DEBUG=OFF"")
+             logger.info(f""Starting process id {process_id}"")
++            logger.info(f""Key value db server starting"")
++            logger.info(f""Server listening on address {SERVER_IP_ADDR}:{PORT}"")
+             server.serve_forever()
+ 
++        except KeyboardInterrupt:
+             logger.info(f""Closing process id {process_id}"")
+             logger.info(f""Key value db server shutting down"")
++            if DEBUG:
++                memory_trace()
+             sys.exit()
++
++  "
+KO;20;Jhryu30;sem_depth_estimation;3a5f3a0c8c5069e837ade1997df7139f482bc985;Increase shared memory;"sudo systemctl restart docker
+ ```
+ 3. [Download and run the image:](https://hub.docker.com/repository/docker/milesial/unet)
+ ```bash
+-sudo docker run --rm --gpus all -it milesial/unet
+ ```
+ 
+ 4. Download the data and run training:
+@@ -60,7 +60,7 @@ A docker image containing the code and the dependencies is available on [DockerH
+ You can download and jump in the container with ([docker >=19.03](https://docs.docker.com/get-docker/)):
+ 
+ ```console
+-docker run -it --rm --gpus all milesial/unet
+ ```
+ 
+ "
+OK;20;Jhryu30;sem_depth_estimation;3a5f3a0c8c5069e837ade1997df7139f482bc985;Increase shared memory;"sudo systemctl restart docker
+ ```
+ 3. [Download and run the image:](https://hub.docker.com/repository/docker/milesial/unet)
+ ```bash
++sudo docker run --rm --shm-size=8g --ulimit memlock=-1 --gpus all -it milesial/unet
+ ```
+ 
+ 4. Download the data and run training:
+@@ -60,7 +60,7 @@ A docker image containing the code and the dependencies is available on [DockerH
+ You can download and jump in the container with ([docker >=19.03](https://docs.docker.com/get-docker/)):
+ 
+ ```console
++docker run -it --rm --shm-size=8g --ulimit memlock=-1 --gpus all milesial/unet
+ ```
+ 
+ "
+KO;21;Jhryu30;sem_depth_estimation;3a5f3a0c8c5069e837ade1997df7139f482bc985;Increase shared memory;"sudo systemctl restart docker
+ ```
+ 3. [Download and run the image:](https://hub.docker.com/repository/docker/milesial/unet)
+ ```bash
+-sudo docker run --rm --gpus all -it milesial/unet
+ ```
+ 
+ 4. Download the data and run training:
+@@ -60,7 +60,7 @@ A docker image containing the code and the dependencies is available on [DockerH
+ You can download and jump in the container with ([docker >=19.03](https://docs.docker.com/get-docker/)):
+ 
+ ```console
+-docker run -it --rm --gpus all milesial/unet
+ ```
+ 
+ "
+OK;21;Jhryu30;sem_depth_estimation;3a5f3a0c8c5069e837ade1997df7139f482bc985;Increase shared memory;"sudo systemctl restart docker
+ ```
+ 3. [Download and run the image:](https://hub.docker.com/repository/docker/milesial/unet)
+ ```bash
++sudo docker run --rm --shm-size=8g --ulimit memlock=-1 --gpus all -it milesial/unet
+ ```
+ 
+ 4. Download the data and run training:
+@@ -60,7 +60,7 @@ A docker image containing the code and the dependencies is available on [DockerH
+ You can download and jump in the container with ([docker >=19.03](https://docs.docker.com/get-docker/)):
+ 
+ ```console
++docker run -it --rm --shm-size=8g --ulimit memlock=-1 --gpus all milesial/unet
+ ```
+ 
+ "
+KO;45;GPXue;mlcvs;ed05ffbc70588cb8ee889c89994248de71139696;[nn] fix memory issue when unraveling datasets for standardization - fix #5;"def standardize_inputs(self, x: torch.Tensor, print_values=False):
+ 
+         Mean, Range = compute_mean_range(x, print_values)
+ 
+-        self.MeanIn = Mean
+-        self.RangeIn = Range
+ 
+         #if hasattr(self,""MeanIn""):
+         #    self.MeanIn = Mean
+@@ -304,8 +304,8 @@ def standardize_outputs(self, input: torch.Tensor, print_values=False):
+ 
+         Mean, Range = compute_mean_range(x, print_values)
+ 
+-        self.MeanOut = Mean
+-        self.RangeOut = Range
+ 
+         #if hasattr(self,""MeanOut""):
+         #    self.MeanOut = Mean.to(self.MeanOut.device)"
+OK;45;GPXue;mlcvs;ed05ffbc70588cb8ee889c89994248de71139696;[nn] fix memory issue when unraveling datasets for standardization - fix #5;"def standardize_inputs(self, x: torch.Tensor, print_values=False):
+ 
+         Mean, Range = compute_mean_range(x, print_values)
+ 
++        self.MeanIn = Mean.to(self.device_)
++        self.RangeIn = Range.to(self.device_)
+ 
+         #if hasattr(self,""MeanIn""):
+         #    self.MeanIn = Mean
+@@ -304,8 +304,8 @@ def standardize_outputs(self, input: torch.Tensor, print_values=False):
+ 
+         Mean, Range = compute_mean_range(x, print_values)
+ 
++        self.MeanOut = Mean.to(self.device_)
++        self.RangeOut = Range.to(self.device_)
+ 
+         #if hasattr(self,""MeanOut""):
+         #    self.MeanOut = Mean.to(self.MeanOut.device)"
+KO;45;GPXue;mlcvs;ed05ffbc70588cb8ee889c89994248de71139696;[nn] fix memory issue when unraveling datasets for standardization - fix #5;"def fit(
+             dataset = create_time_lagged_dataset(X,t,lag_time)
+             train_loader = FastTensorDataLoader(dataset.tensors, batch_size=batch_size, shuffle=False) 
+ 
+-        # standardize inputs (unravel dataset and copy to device) #TODO check memory usage on GPU
+-        x_train = torch.cat([batch[0] for batch in train_loader]).to(self.device_)
+         if standardize_inputs:
+             self.standardize_inputs(x_train)
+ "
+OK;45;GPXue;mlcvs;ed05ffbc70588cb8ee889c89994248de71139696;[nn] fix memory issue when unraveling datasets for standardization - fix #5;"def fit(
+             dataset = create_time_lagged_dataset(X,t,lag_time)
+             train_loader = FastTensorDataLoader(dataset.tensors, batch_size=batch_size, shuffle=False) 
+ 
++        # standardize inputs (unravel dataset to compute average)
++        x_train = torch.cat([batch[0] for batch in train_loader])
+         if standardize_inputs:
+             self.standardize_inputs(x_train)
+ "

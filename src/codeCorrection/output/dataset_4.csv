@@ -1,0 +1,2379 @@
+Label;Page;Username;Repo;Commit;Bug;Code
+KO;1;thaddeusdiamond;cardano-nft-vending-machine;23936f4c72aa9416f62100afa46630a73f51705c;"BlockfrostApi: Support UTXO Pagination
+
+This isn't the most memory efficient, but we estimate each entry is
+around 500 bytes, so 20K UTXOs would only use around 10M of RAM to
+store.  These don't need to be kept in L1 cache, given that these are
+not CPU intensive caches, they are mostly reference lookups for where to
+how to compose transaction inputs that will be submitted to the
+Blockfrost API.
+
+To manually test this, rather than submit 100 different transactions, we
+simply submit three transactions and temporary mock out the
+UTXO_LIST_LIMIT VARIABLE to 1 to ensure that pagination of the 3
+transactions work.
+
+[ Documentation: None ]
+[ Testing: Manual as described above ]";"build-backend = ""setuptools.build_meta""
+ 
+ [project]
+ name = ""cardano-nft-vending-machine""
+-version = ""0.3.0-beta2""
+ 
+ description = ""Library to perform NFT mints automatically on the Cardano blockchain""
+ readme = ""README.md"""
+OK;1;thaddeusdiamond;cardano-nft-vending-machine;23936f4c72aa9416f62100afa46630a73f51705c;"BlockfrostApi: Support UTXO Pagination
+
+This isn't the most memory efficient, but we estimate each entry is
+around 500 bytes, so 20K UTXOs would only use around 10M of RAM to
+store.  These don't need to be kept in L1 cache, given that these are
+not CPU intensive caches, they are mostly reference lookups for where to
+how to compose transaction inputs that will be submitted to the
+Blockfrost API.
+
+To manually test this, rather than submit 100 different transactions, we
+simply submit three transactions and temporary mock out the
+UTXO_LIST_LIMIT VARIABLE to 1 to ensure that pagination of the 3
+transactions work.
+
+[ Documentation: None ]
+[ Testing: Manual as described above ]";"build-backend = ""setuptools.build_meta""
+ 
+ [project]
+ name = ""cardano-nft-vending-machine""
++version = ""0.3.0-beta3""
+ 
+ description = ""Library to perform NFT mints automatically on the Cardano blockchain""
+ readme = ""README.md"""
+KO;1;thaddeusdiamond;cardano-nft-vending-machine;23936f4c72aa9416f62100afa46630a73f51705c;"BlockfrostApi: Support UTXO Pagination
+
+This isn't the most memory efficient, but we estimate each entry is
+around 500 bytes, so 20K UTXOs would only use around 10M of RAM to
+store.  These don't need to be kept in L1 cache, given that these are
+not CPU intensive caches, they are mostly reference lookups for where to
+how to compose transaction inputs that will be submitted to the
+Blockfrost API.
+
+To manually test this, rather than submit 100 different transactions, we
+simply submit three transactions and temporary mock out the
+UTXO_LIST_LIMIT VARIABLE to 1 to ensure that pagination of the 3
+transactions work.
+
+[ Documentation: None ]
+[ Testing: Manual as described above ]";" Repreentation of the Blockfrost web API used in retrieving metadata about txn i/o on the chain.
+ """"""
+ class BlockfrostApi(object):
+     def __init__(self, project, mainnet=False):
+         self.project = project
+         self.mainnet = mainnet
+@@ -39,21 +42,26 @@ def get_input_address(self, txn_hash):
+         return utxo_inputs.pop()
+ 
+     def get_utxos(self, address, exclusions):
+-        try:
+-            utxo_data = self.__call_get_api(f""addresses/{address}/utxos"")
+-        except requests.exceptions.HTTPError as e:
+-            if e.response.status_code == HTTPStatus.NOT_FOUND:
+-                return []
+-            raise e
+         available_utxos = set()
+-        #print('EXCLUSIONS\t', [f'{utxo.hash}#{utxo.ix}' for utxo in exclusions])
+-        for raw_utxo in utxo_data:
+-            balances = [Utxo.Balance(int(balance['quantity']), balance['unit']) for balance in raw_utxo['amount']]
+-            utxo = Utxo(raw_utxo['tx_hash'], raw_utxo['output_index'], balances)
+-            if utxo in exclusions:
+-                print(f'Skipping {utxo.hash}#{utxo.ix}')
+-                continue
+-            available_utxos.add(utxo)
+         return available_utxos
+ 
+     def get_protocol_parameters(self):"
+OK;1;thaddeusdiamond;cardano-nft-vending-machine;23936f4c72aa9416f62100afa46630a73f51705c;"BlockfrostApi: Support UTXO Pagination
+
+This isn't the most memory efficient, but we estimate each entry is
+around 500 bytes, so 20K UTXOs would only use around 10M of RAM to
+store.  These don't need to be kept in L1 cache, given that these are
+not CPU intensive caches, they are mostly reference lookups for where to
+how to compose transaction inputs that will be submitted to the
+Blockfrost API.
+
+To manually test this, rather than submit 100 different transactions, we
+simply submit three transactions and temporary mock out the
+UTXO_LIST_LIMIT VARIABLE to 1 to ensure that pagination of the 3
+transactions work.
+
+[ Documentation: None ]
+[ Testing: Manual as described above ]";" Repreentation of the Blockfrost web API used in retrieving metadata about txn i/o on the chain.
+ """"""
+ class BlockfrostApi(object):
++
++    _UTXO_LIST_LIMIT = 100
++
+     def __init__(self, project, mainnet=False):
+         self.project = project
+         self.mainnet = mainnet
+@@ -39,21 +42,26 @@ def get_input_address(self, txn_hash):
+         return utxo_inputs.pop()
+ 
+     def get_utxos(self, address, exclusions):
+         available_utxos = set()
++        current_page = 0
++        while True:
++            current_page += 1
++            try:
++                utxo_data = self.__call_get_api(f""addresses/{address}/utxos?count={BlockfrostApi._UTXO_LIST_LIMIT}&page={current_page}"")
++            except requests.exceptions.HTTPError as e:
++                if e.response.status_code == HTTPStatus.NOT_FOUND:
++                    return []
++                raise e
++            #print('EXCLUSIONS\t', [f'{utxo.hash}#{utxo.ix}' for utxo in exclusions])
++            for raw_utxo in utxo_data:
++                balances = [Utxo.Balance(int(balance['quantity']), balance['unit']) for balance in raw_utxo['amount']]
++                utxo = Utxo(raw_utxo['tx_hash'], raw_utxo['output_index'], balances)
++                if utxo in exclusions:
++                    print(f'Skipping {utxo.hash}#{utxo.ix}')
++                    continue
++                available_utxos.add(utxo)
++            if len(utxo_data) < BlockfrostApi._UTXO_LIST_LIMIT:
++                break
+         return available_utxos
+ 
+     def get_protocol_parameters(self):"
+KO;1;lorserker;ben;94ae908a7a8c5a0f8cfb80557355daea74e69fd8;"Merge pull request #15 from lorserker/fix-memory-leak
+
+finalizing tensorflow graph to avoid memory leak";"def __init__(self, name, model_path):
+         self.graph = tf.Graph()
+         self.sess = tf.Session(graph=self.graph)
+         self.load_model()
+         self.lstm_size = 128
+         self.zero_state = (
+             State(c=np.zeros((1, self.lstm_size)), h=np.zeros((1, self.lstm_size))),
+@@ -93,7 +95,7 @@ def pred_fun_seq(x):
+                     keep_prob: p_keep,
+                     seq_in: x,
+                 }
+-                result = self.sess.run(tf.nn.softmax(out_bid_logit), feed_dict=feed_dict)
+             return result
+         
+         return pred_fun_seq, pred_fun"
+OK;1;lorserker;ben;94ae908a7a8c5a0f8cfb80557355daea74e69fd8;"Merge pull request #15 from lorserker/fix-memory-leak
+
+finalizing tensorflow graph to avoid memory leak";"def __init__(self, name, model_path):
+         self.graph = tf.Graph()
+         self.sess = tf.Session(graph=self.graph)
+         self.load_model()
++        self.output_softmax = tf.nn.softmax(self.graph.get_tensor_by_name('out_bid_logit:0'))
++        self.graph.finalize()
+         self.lstm_size = 128
+         self.zero_state = (
+             State(c=np.zeros((1, self.lstm_size)), h=np.zeros((1, self.lstm_size))),
+@@ -93,7 +95,7 @@ def pred_fun_seq(x):
+                     keep_prob: p_keep,
+                     seq_in: x,
+                 }
++                result = self.sess.run(self.output_softmax, feed_dict=feed_dict)
+             return result
+         
+         return pred_fun_seq, pred_fun"
+KO;1;lorserker;ben;94ae908a7a8c5a0f8cfb80557355daea74e69fd8;"Merge pull request #15 from lorserker/fix-memory-leak
+
+finalizing tensorflow graph to avoid memory leak";" import numpy as np
+ import tensorflow as tf
+ 
+ 
+ SUIT_MASK = np.array([
+     [1] * 8 + [0] * 24,
+@@ -18,6 +20,7 @@ def __init__(self, name, model_path):
+         self.graph = tf.Graph()
+         self.sess = tf.Session(graph=self.graph)
+         self.load_model()
+         self.model = self.init_model()
+ 
+     def close(self):
+@@ -47,7 +50,7 @@ def pred_fun(x):
+         return pred_fun
+ 
+     def reshape_card_logit(self, card_logit, x):
+-        return self.sess.run(tf.nn.softmax(card_logit.reshape((x.shape[0], x.shape[1], 32))))#[:,-1,:]
+ 
+     def next_cards_softmax(self, x):
+         return self.model(x)[:,-1,:]
+@@ -56,7 +59,7 @@ def next_cards_softmax(self, x):
+ class BatchPlayerLefty(BatchPlayer):
+ 
+     def reshape_card_logit(self, card_logit, x):
+-        return self.sess.run(tf.nn.softmax(card_logit.reshape((x.shape[0], x.shape[1] - 1, 32))))#[:,-1,:]
+ 
+ 
+ def follow_suit(cards_softmax, own_cards, trick_suit):"
+OK;1;lorserker;ben;94ae908a7a8c5a0f8cfb80557355daea74e69fd8;"Merge pull request #15 from lorserker/fix-memory-leak
+
+finalizing tensorflow graph to avoid memory leak";" import numpy as np
+ import tensorflow as tf
+ 
++from scipy.special import softmax
++
+ 
+ SUIT_MASK = np.array([
+     [1] * 8 + [0] * 24,
+@@ -18,6 +20,7 @@ def __init__(self, name, model_path):
+         self.graph = tf.Graph()
+         self.sess = tf.Session(graph=self.graph)
+         self.load_model()
++        self.graph.finalize()
+         self.model = self.init_model()
+ 
+     def close(self):
+@@ -47,7 +50,7 @@ def pred_fun(x):
+         return pred_fun
+ 
+     def reshape_card_logit(self, card_logit, x):
++        return softmax(card_logit.reshape((x.shape[0], x.shape[1], 32)), axis=2)
+ 
+     def next_cards_softmax(self, x):
+         return self.model(x)[:,-1,:]
+@@ -56,7 +59,7 @@ def next_cards_softmax(self, x):
+ class BatchPlayerLefty(BatchPlayer):
+ 
+     def reshape_card_logit(self, card_logit, x):
++        return softmax(card_logit.reshape((x.shape[0], x.shape[1] - 1, 32)), axis=2)
+ 
+ 
+ def follow_suit(cards_softmax, own_cards, trick_suit):"
+KO;1;lorserker;ben;01881d37335402e1534ae66374cb84ff257d00c3;finalizing tensorflow graph to avoid memory leak;"def __init__(self, name, model_path):
+         self.graph = tf.Graph()
+         self.sess = tf.Session(graph=self.graph)
+         self.load_model()
+         self.lstm_size = 128
+         self.zero_state = (
+             State(c=np.zeros((1, self.lstm_size)), h=np.zeros((1, self.lstm_size))),
+@@ -93,7 +95,7 @@ def pred_fun_seq(x):
+                     keep_prob: p_keep,
+                     seq_in: x,
+                 }
+-                result = self.sess.run(tf.nn.softmax(out_bid_logit), feed_dict=feed_dict)
+             return result
+         
+         return pred_fun_seq, pred_fun"
+OK;1;lorserker;ben;01881d37335402e1534ae66374cb84ff257d00c3;finalizing tensorflow graph to avoid memory leak;"def __init__(self, name, model_path):
+         self.graph = tf.Graph()
+         self.sess = tf.Session(graph=self.graph)
+         self.load_model()
++        self.output_softmax = tf.nn.softmax(self.graph.get_tensor_by_name('out_bid_logit:0'))
++        self.graph.finalize()
+         self.lstm_size = 128
+         self.zero_state = (
+             State(c=np.zeros((1, self.lstm_size)), h=np.zeros((1, self.lstm_size))),
+@@ -93,7 +95,7 @@ def pred_fun_seq(x):
+                     keep_prob: p_keep,
+                     seq_in: x,
+                 }
++                result = self.sess.run(self.output_softmax, feed_dict=feed_dict)
+             return result
+         
+         return pred_fun_seq, pred_fun"
+KO;1;lorserker;ben;01881d37335402e1534ae66374cb84ff257d00c3;finalizing tensorflow graph to avoid memory leak;" import numpy as np
+ import tensorflow as tf
+ 
+ 
+ SUIT_MASK = np.array([
+     [1] * 8 + [0] * 24,
+@@ -18,6 +20,7 @@ def __init__(self, name, model_path):
+         self.graph = tf.Graph()
+         self.sess = tf.Session(graph=self.graph)
+         self.load_model()
+         self.model = self.init_model()
+ 
+     def close(self):
+@@ -47,7 +50,7 @@ def pred_fun(x):
+         return pred_fun
+ 
+     def reshape_card_logit(self, card_logit, x):
+-        return self.sess.run(tf.nn.softmax(card_logit.reshape((x.shape[0], x.shape[1], 32))))#[:,-1,:]
+ 
+     def next_cards_softmax(self, x):
+         return self.model(x)[:,-1,:]
+@@ -56,7 +59,7 @@ def next_cards_softmax(self, x):
+ class BatchPlayerLefty(BatchPlayer):
+ 
+     def reshape_card_logit(self, card_logit, x):
+-        return self.sess.run(tf.nn.softmax(card_logit.reshape((x.shape[0], x.shape[1] - 1, 32))))#[:,-1,:]
+ 
+ 
+ def follow_suit(cards_softmax, own_cards, trick_suit):"
+OK;1;lorserker;ben;01881d37335402e1534ae66374cb84ff257d00c3;finalizing tensorflow graph to avoid memory leak;" import numpy as np
+ import tensorflow as tf
+ 
++from scipy.special import softmax
++
+ 
+ SUIT_MASK = np.array([
+     [1] * 8 + [0] * 24,
+@@ -18,6 +20,7 @@ def __init__(self, name, model_path):
+         self.graph = tf.Graph()
+         self.sess = tf.Session(graph=self.graph)
+         self.load_model()
++        self.graph.finalize()
+         self.model = self.init_model()
+ 
+     def close(self):
+@@ -47,7 +50,7 @@ def pred_fun(x):
+         return pred_fun
+ 
+     def reshape_card_logit(self, card_logit, x):
++        return softmax(card_logit.reshape((x.shape[0], x.shape[1], 32)), axis=2)
+ 
+     def next_cards_softmax(self, x):
+         return self.model(x)[:,-1,:]
+@@ -56,7 +59,7 @@ def next_cards_softmax(self, x):
+ class BatchPlayerLefty(BatchPlayer):
+ 
+     def reshape_card_logit(self, card_logit, x):
++        return softmax(card_logit.reshape((x.shape[0], x.shape[1] - 1, 32)), axis=2)
+ 
+ 
+ def follow_suit(cards_softmax, own_cards, trick_suit):"
+KO;3;k2-fsa;multi_quantization;0ddde6bfb6ed04a79099626ad237c7552f7b6ac3;"Merge pull request #3 from danpovey/fast_quantization
+
+Make quantization faster and more memory efficient.";"def _refine_indexes(self,
+         #     and doubles every 2 iterations to keep the work per iteration
+         #     fairly constant.
+ 
+ 
+         # cur_deltas represents the change in x_err from making each choice (while
+         # leaving all the other choices un-made by just keeping the passed-in/old
+@@ -344,30 +373,68 @@ def _refine_indexes(self,
+         N = self.num_codebooks
+         K = self.codebook_size
+         L = 1  # L is the number of codebooks covered by each choice.
+-        cur_deltas = all_centers - old_centers  # (B, N, K, dim)
+         dim = self.dim
+-        assert cur_deltas.shape == (B, N, K, dim)
+         # cur_indexes is the codebook indexes corresponding to 'cur_deltas'.
+         cur_indexes = torch.arange(K, device=x.device).reshape(1, 1, K, 1).expand(B, N, K, L)
+ 
+-        # cur_sumsq: (B, N, K), is the sum-squared error if we were to
+-        # make the n'th choice without making any of the other N-1 choices, i.e.
+-        # if we were to leave the other choices at the value we had at input.
+-        # Specifically, it is always supposed to equal the value of
+-        #  ((x_err + cur_deltas)**2).sum(dim=-1)
+-        # .. but we keep it around separately because it enables an optimization.
+-        modified_err = x_err + cur_deltas # (B, N, K, dim)
+-
+-        # cur_sumsq: (B, N, K), equivalent to: ((x_err + cur_deltas)**2).sum(dim=-1)
+-        # We really want batched vector-vector product her, which torch does not
+-        # explicitly support, so we use a matrix multiplication with 1x1 output.
+-        cur_sumsq = torch.matmul(modified_err.unsqueeze(-2),
+-                                 modified_err.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+-
+-        assert cur_sumsq.shape == (B, N, K)
+-        # x_err_sumsq: (B, 1, 1), is the sum-squared of x_err; we'll need it in the loop.
+         x_err_sumsq = (x_err**2).sum(dim=-1)
+-        gather_deltas = None # will be a lambda, see below.
+ 
+         K_cutoff_base = 8 if self.codebook_size <= 16 else 16
+ 
+@@ -400,16 +467,25 @@ def get_K_cutoff():
+ 
+                 this_indexes = this_indexes.unsqueeze(-1)
+ 
+-                # cur_indexes is (B, N, new_K, dim), but sorted from worst to best.
+                 cur_indexes = torch.gather(input=cur_indexes, dim=2,
+                                            index=this_indexes.expand(B, N, new_K, L))
+ 
+-                if cur_deltas is not None:
+                     # also sort cur_deltas in the same way
+                     cur_deltas = torch.gather(input=cur_deltas, dim=2,
+                                               index=this_indexes.expand(B, N, new_K, dim))
+                 else:
+                     cur_deltas = gather_deltas(this_indexes)
+                 K = new_K
+             else:
+                 # Combine pairs of choices.  We know that N > 1."
+OK;3;k2-fsa;multi_quantization;0ddde6bfb6ed04a79099626ad237c7552f7b6ac3;"Merge pull request #3 from danpovey/fast_quantization
+
+Make quantization faster and more memory efficient.";"def _refine_indexes(self,
+         #     and doubles every 2 iterations to keep the work per iteration
+         #     fairly constant.
+ 
++        # At all points in the algorithm we maintain cur_sumsq and (conceptually)
++        # cur_deltas (however in some parts cur_deltas is not instantiated, see
++        # gather_deltas).
++        #
++        # cur_indexes: (B, N, K, L), initially (B, num_codebooks, codebook_size, 1),
++        #   gives the codebook indexes corresponding to the k'th value of the n'th
++        #   choice.  Initially this is just an arange expression but from the 1st
++        #   iter of the algorithm it changes to something nontrivial.
++        #
++        # cur_sumsq: (B, N, K), is the sum-squared error of x versus its predicted value
++        # from the codebooks, if we were to
++        # make the n'th choice with value k without making any of the other N-1 choices, i.e.
++        # if we were to leave the other choices at the value we had at input.
++        # Specifically, it is always supposed to equal the value of
++        #  ((x_err + cur_deltas)**2).sum(dim=-1)
++        # .. but we keep it around separately because it enables an optimization.
++        #
++        # cur_deltas: (B, N, K, dim), is the change in x_err (with x_err =
++        # x_approx - x and x_approx being a sum of codebook indexes) if we were
++        # to make the n'th choice with value k without making any of the other
++        # N-1 choices.
++        # At the current point, i.e. at the start of the algorithm,
++        # cur_deltas[b][n][k] says ""what would be the change in x_err if we
++        # were to replace the current choice of the n'th codebook entry-- i.e.
++        # the choice reflected in `indexes`-- with value k?  [In general,
++        # cur_deltas[b][n][k] refers not directly to a codebook indexes, but
++        # to an indexes into `cur_indexes` which corresponds to the sequence/combination
++        # of codebook indexes that are stored in cur_indexes[b][n][k].
++
+ 
+         # cur_deltas represents the change in x_err from making each choice (while
+         # leaving all the other choices un-made by just keeping the passed-in/old
+@@ -344,30 +373,68 @@ def _refine_indexes(self,
+         N = self.num_codebooks
+         K = self.codebook_size
+         L = 1  # L is the number of codebooks covered by each choice.
++        # Conceptually we could do:
++        # cur_deltas = all_centers - old_centers  # (B, N, K, dim)
++        # ... however actually we won't be instantiating cur_deltas at this stage of the
++        # algorithm.
+         dim = self.dim
++
+         # cur_indexes is the codebook indexes corresponding to 'cur_deltas'.
+         cur_indexes = torch.arange(K, device=x.device).reshape(1, 1, K, 1).expand(B, N, K, L)
+ 
++        if True:
++            # compute cur_sumsq using an efficient approach
++            x_err_sumsq = (x_err ** 2).sum(dim=-1) # (B, 1, 1)
++
++            x_remaining = x_err - old_centers  # (B, num_codebooks, 1, dim): the x_err after subtracting
++            # each of the codebooks; if we add back to this any given
++            # codebook vector (from all_centers), we'll get the error
++            # if we were to
++            # choose that codebook entry instead of the one actually chosen.
++
++            x_remaining_sumsq = (x_remaining ** 2).sum(dim=-1) # (B, num_codebooks, 1)
++            # all_centers_sumsq is the sumsq of all the centers..
++            all_centers_sumsq = (all_centers ** 2).sum(dim=-1) # (1, num_codebooks, codebook_size)
++
++            cross_sum = torch.matmul(all_centers, # (1, num_codebooks, codebook_size, dim)
++                                     x_remaining.permute(2, 1, 3, 0)  # (1, num_codebooks, dim, B)
++            ) # (1, num_codebooks, codebook_size, B)
++            cross_sum = cross_sum.squeeze(0).permute(2, 0, 1) # (B, num_codebooks, codebook_size)
++            # (B, num_codebooks, codebook_size); interpret as (B, N, K)
++            cur_sumsq = x_remaining_sumsq + all_centers_sumsq + 2 * cross_sum
++            assert cur_sumsq.shape == (B, N, K)
++
++            # gather_deltas (which will be re-defined below) is a lambda from
++            # `this_indexes`, a LongTensor of shape (B, N, new_K, 1) [which
++            # at the current iteration would equal (B, num_codebooks, new_K, 1)]
++            # with elements in
++            # {0..K-1} [i.e. 0..codebook_size-1], to the new ""cur_deltas"".
++            # It is provided as a workaround in
++            # case we did not physically instantiate cur_deltas on this iteration.
++            # In general cur_deltas is supposed to represent ""change in encoded
++            # value"" if we were to make a particular modified index choice, leaving
++            # all other choices as they were on entry.
++            # gather_deltas is supposed to be a lambda from this_indexes to the
++            # something equivalent to following expression (if cur_deltas had actually
++            # existed):
++            #   torch.gather(input=cur_deltas, dim=2, index=this_indexes.expand(B, N, new_K, dim))
++
++            gather_deltas = lambda this_indexes: (
++                torch.gather(input=all_centers.expand(B, N, K, dim), dim=2,
++                             index=this_indexes.expand(B, N, -1, dim)) - old_centers
++            )
++        else:
++            cur_deltas = all_centers - old_centers  # (B, N, K, dim)
++            ## cur_sumsq: (B, N, K), equivalent to: ((x_err + cur_deltas)**2).sum(dim=-1)
++            ## We really want batched vector-vector product her, which torch does not
++            ## explicitly support, so we use a matrix multiplication with 1x1 output.
++            modified_err = x_err + cur_deltas # (B, N, K, dim)
++            cur_sumsq = torch.matmul(modified_err.unsqueeze(-2),
++                                     modified_err.unsqueeze(-1)).squeeze(-1).squeeze(-1)
++            gather_deltas = None
++
++            # x_err_sumsq: (B, 1, 1), is the sum-squared of x_err; we'll need it in the loop.
+         x_err_sumsq = (x_err**2).sum(dim=-1)
+ 
+         K_cutoff_base = 8 if self.codebook_size <= 16 else 16
+ 
+@@ -400,16 +467,25 @@ def get_K_cutoff():
+ 
+                 this_indexes = this_indexes.unsqueeze(-1)
+ 
++                # cur_indexes is (B, N, new_K, L), but with only the chosen
++                # indexes kept.
+                 cur_indexes = torch.gather(input=cur_indexes, dim=2,
+                                            index=this_indexes.expand(B, N, new_K, L))
+ 
++                if gather_deltas is None:
+                     # also sort cur_deltas in the same way
+                     cur_deltas = torch.gather(input=cur_deltas, dim=2,
+                                               index=this_indexes.expand(B, N, new_K, dim))
+                 else:
++                    # gather_deltas should be a lambda from:
++                    # this_indexes: a LongTensor of shape (B, N, new_K, 1) containing elements in {0..K-1}
++                    # to the new ""deltas"" which should be of shape
++                    # (B, N, new_K, dim)
++                    # representing the difference from the baseline ""x_offset"" if we choose this
++                    # index for this codebook or range of codebooks, leaving other choices
++                    # as they were at entry to this function.
+                     cur_deltas = gather_deltas(this_indexes)
++                    gather_deltas = None
+                 K = new_K
+             else:
+                 # Combine pairs of choices.  We know that N > 1."
+KO;3;k2-fsa;multi_quantization;0ddde6bfb6ed04a79099626ad237c7552f7b6ac3;"Merge pull request #3 from danpovey/fast_quantization
+
+Make quantization faster and more memory efficient.";"def minibatch_generator(data: Tensor,
+ 
+ if __name__ == ""__main__"":
+     logging.getLogger().setLevel(logging.INFO)
+-    #_test_train_from_file()
+     _test_joint_predictor()"
+OK;3;k2-fsa;multi_quantization;0ddde6bfb6ed04a79099626ad237c7552f7b6ac3;"Merge pull request #3 from danpovey/fast_quantization
+
+Make quantization faster and more memory efficient.";"def minibatch_generator(data: Tensor,
+ 
+ if __name__ == ""__main__"":
+     logging.getLogger().setLevel(logging.INFO)
++    _test_train_from_file()
+     _test_joint_predictor()"
+KO;3;k2-fsa;multi_quantization;15ba47302b884bd91726cd6acb7d2895e4522b7f;Make quantization faster and more memory efficient.;"def _refine_indexes(self,
+         #     and doubles every 2 iterations to keep the work per iteration
+         #     fairly constant.
+ 
+ 
+         # cur_deltas represents the change in x_err from making each choice (while
+         # leaving all the other choices un-made by just keeping the passed-in/old
+@@ -344,30 +373,68 @@ def _refine_indexes(self,
+         N = self.num_codebooks
+         K = self.codebook_size
+         L = 1  # L is the number of codebooks covered by each choice.
+-        cur_deltas = all_centers - old_centers  # (B, N, K, dim)
+         dim = self.dim
+-        assert cur_deltas.shape == (B, N, K, dim)
+         # cur_indexes is the codebook indexes corresponding to 'cur_deltas'.
+         cur_indexes = torch.arange(K, device=x.device).reshape(1, 1, K, 1).expand(B, N, K, L)
+ 
+-        # cur_sumsq: (B, N, K), is the sum-squared error if we were to
+-        # make the n'th choice without making any of the other N-1 choices, i.e.
+-        # if we were to leave the other choices at the value we had at input.
+-        # Specifically, it is always supposed to equal the value of
+-        #  ((x_err + cur_deltas)**2).sum(dim=-1)
+-        # .. but we keep it around separately because it enables an optimization.
+-        modified_err = x_err + cur_deltas # (B, N, K, dim)
+-
+-        # cur_sumsq: (B, N, K), equivalent to: ((x_err + cur_deltas)**2).sum(dim=-1)
+-        # We really want batched vector-vector product her, which torch does not
+-        # explicitly support, so we use a matrix multiplication with 1x1 output.
+-        cur_sumsq = torch.matmul(modified_err.unsqueeze(-2),
+-                                 modified_err.unsqueeze(-1)).squeeze(-1).squeeze(-1)
+-
+-        assert cur_sumsq.shape == (B, N, K)
+-        # x_err_sumsq: (B, 1, 1), is the sum-squared of x_err; we'll need it in the loop.
+         x_err_sumsq = (x_err**2).sum(dim=-1)
+-        gather_deltas = None # will be a lambda, see below.
+ 
+         K_cutoff_base = 8 if self.codebook_size <= 16 else 16
+ 
+@@ -400,16 +467,33 @@ def get_K_cutoff():
+ 
+                 this_indexes = this_indexes.unsqueeze(-1)
+ 
+-                # cur_indexes is (B, N, new_K, dim), but sorted from worst to best.
+                 cur_indexes = torch.gather(input=cur_indexes, dim=2,
+                                            index=this_indexes.expand(B, N, new_K, L))
+ 
+-                if cur_deltas is not None:
+                     # also sort cur_deltas in the same way
+                     cur_deltas = torch.gather(input=cur_deltas, dim=2,
+                                               index=this_indexes.expand(B, N, new_K, dim))
+                 else:
+                     cur_deltas = gather_deltas(this_indexes)
+                 K = new_K
+             else:
+                 # Combine pairs of choices.  We know that N > 1."
+OK;3;k2-fsa;multi_quantization;15ba47302b884bd91726cd6acb7d2895e4522b7f;Make quantization faster and more memory efficient.;"def _refine_indexes(self,
+         #     and doubles every 2 iterations to keep the work per iteration
+         #     fairly constant.
+ 
++        # At all points in the algorithm we maintain cur_sumsq and (conceptually)
++        # cur_deltas (however in some parts cur_deltas is not instantiated, see
++        # gather_deltas).
++        #
++        # cur_indexes: (B, N, K, L), initially (B, num_codebooks, codebook_size, 1),
++        #   gives the codebook indexes corresponding to the k'th value of the n'th
++        #   choice.  Initially this is just an arange expression but from the 1st
++        #   iter of the algorithm it changes to something nontrivial.
++        #
++        # cur_sumsq: (B, N, K), is the sum-squared error of x versus its predicted value
++        # from the codebooks, if we were to
++        # make the n'th choice with value k without making any of the other N-1 choices, i.e.
++        # if we were to leave the other choices at the value we had at input.
++        # Specifically, it is always supposed to equal the value of
++        #  ((x_err + cur_deltas)**2).sum(dim=-1)
++        # .. but we keep it around separately because it enables an optimization.
++        #
++        # cur_deltas: (B, N, K, dim), is the change in x_err (with x_err =
++        # x_approx - x and x_approx being a sum of codebook indexes) if we were
++        # to make the n'th choice with value k without making any of the other
++        # N-1 choices.
++        # At the current point, i.e. at the start of the algorithm,
++        # cur_deltas[b][n][k] says ""what would be the change in x_err if we
++        # were to replace the current choice of the n'th codebook entry-- i.e.
++        # the choice reflected in `indexes`-- with value k?  [In general,
++        # cur_deltas[b][n][k] refers not directly to a codebook indexes, but
++        # to an indexes into `cur_indexes` which corresponds to the sequence/combination
++        # of codebook indexes that are stored in cur_indexes[b][n][k].
++
+ 
+         # cur_deltas represents the change in x_err from making each choice (while
+         # leaving all the other choices un-made by just keeping the passed-in/old
+@@ -344,30 +373,68 @@ def _refine_indexes(self,
+         N = self.num_codebooks
+         K = self.codebook_size
+         L = 1  # L is the number of codebooks covered by each choice.
++        # Conceptually we could do:
++        # cur_deltas = all_centers - old_centers  # (B, N, K, dim)
++        # ... however actually we won't be instantiating cur_deltas at this stage of the
++        # algorithm.
+         dim = self.dim
++
+         # cur_indexes is the codebook indexes corresponding to 'cur_deltas'.
+         cur_indexes = torch.arange(K, device=x.device).reshape(1, 1, K, 1).expand(B, N, K, L)
+ 
++        if True:
++            # compute cur_sumsq using an efficient approach
++            x_err_sumsq = (x_err ** 2).sum(dim=-1) # (B, 1, 1)
++
++            x_remaining = x_err - old_centers  # (B, num_codebooks, 1, dim): the x_err after subtracting
++            # each of the codebooks; if we add back to this any given
++            # codebook vector (from all_centers), we'll get the error
++            # if we were to
++            # choose that codebook entry instead of the one actually chosen.
++
++            x_remaining_sumsq = (x_remaining ** 2).sum(dim=-1) # (B, num_codebooks, 1)
++            # all_centers_sumsq is the sumsq of all the centers..
++            all_centers_sumsq = (all_centers ** 2).sum(dim=-1) # (1, num_codebooks, codebook_size)
++
++            cross_sum = torch.matmul(all_centers, # (1, num_codebooks, codebook_size, dim)
++                                     x_remaining.permute(2, 1, 3, 0)  # (1, num_codebooks, dim, B)
++            ) # (1, num_codebooks, codebook_size, B)
++            cross_sum = cross_sum.squeeze(0).permute(2, 0, 1) # (B, num_codebooks, codebook_size)
++            # (B, num_codebooks, codebook_size); interpret as (B, N, K)
++            cur_sumsq = x_remaining_sumsq + all_centers_sumsq + 2 * cross_sum
++            assert cur_sumsq.shape == (B, N, K)
++
++            # gather_deltas (which will be re-defined below) is a lambda from
++            # `this_indexes`, a LongTensor of shape (B, N, new_K, 1) [which
++            # at the current iteration would equal (B, num_codebooks, new_K, 1)]
++            # with elements in
++            # {0..K-1} [i.e. 0..codebook_size-1], to the new ""cur_deltas"".
++            # It is provided as a workaround in
++            # case we did not physically instantiate cur_deltas on this iteration.
++            # In general cur_deltas is supposed to represent ""change in encoded
++            # value"" if we were to make a particular modified index choice, leaving
++            # all other choices as they were on entry.
++            # gather_deltas is supposed to be a lambda from this_indexes to the
++            # something equivalent to following expression (if cur_deltas had actually
++            # existed):
++            #   torch.gather(input=cur_deltas, dim=2, index=this_indexes.expand(B, N, new_K, dim))
++
++            gather_deltas = lambda this_indexes: (
++                torch.gather(input=all_centers.expand(B, N, K, dim), dim=2,
++                             index=this_indexes.expand(B, N, -1, dim)) - old_centers
++            )
++        else:
++            cur_deltas = all_centers - old_centers  # (B, N, K, dim)
++            ## cur_sumsq: (B, N, K), equivalent to: ((x_err + cur_deltas)**2).sum(dim=-1)
++            ## We really want batched vector-vector product her, which torch does not
++            ## explicitly support, so we use a matrix multiplication with 1x1 output.
++            modified_err = x_err + cur_deltas # (B, N, K, dim)
++            cur_sumsq = torch.matmul(modified_err.unsqueeze(-2),
++                                     modified_err.unsqueeze(-1)).squeeze(-1).squeeze(-1)
++            gather_deltas = None
++
++            # x_err_sumsq: (B, 1, 1), is the sum-squared of x_err; we'll need it in the loop.
+         x_err_sumsq = (x_err**2).sum(dim=-1)
+ 
+         K_cutoff_base = 8 if self.codebook_size <= 16 else 16
+ 
+@@ -400,16 +467,33 @@ def get_K_cutoff():
+ 
+                 this_indexes = this_indexes.unsqueeze(-1)
+ 
++                # cur_indexes is (B, N, new_K, L), but with only the chosen
++                # indexes kept.
+                 cur_indexes = torch.gather(input=cur_indexes, dim=2,
+                                            index=this_indexes.expand(B, N, new_K, L))
+ 
++                if gather_deltas is None:
+                     # also sort cur_deltas in the same way
+                     cur_deltas = torch.gather(input=cur_deltas, dim=2,
+                                               index=this_indexes.expand(B, N, new_K, dim))
+                 else:
++                    # gather_deltas should be a lambda from:
++                    # this_indexes: a LongTensor of shape (B, N, new_K, 1) containing elements in {0..K-1}
++                    # to the new ""deltas"" which should be of shape
++                    # (B, N, new_K, dim)
++                    # representing the difference from the baseline ""x_offset"" if we choose this
++                    # index for this codebook or range of codebooks, leaving other choices
++                    # as they were at entry to this function.
++
++                    #if cur_deltas is not None:
++                    #    cur_deltas_alt = torch.gather(input=cur_deltas, dim=2,
++                    #                                  index=this_indexes.expand(B, N, new_K, dim))
+                     cur_deltas = gather_deltas(this_indexes)
++                    #if cur_deltas is not None and cur_deltas.shape == cur_deltas_alt.shape:
++                    #    print(""cur_deltas: "", cur_deltas[:3,:3,:3,:3])
++                    #    print(""cur_deltas_alt: "", cur_deltas_alt[:3,:3,:3,:3])
++                    #    assert torch.allclose(cur_deltas, cur_deltas_alt)
++                    gather_deltas = None
+                 K = new_K
+             else:
+                 # Combine pairs of choices.  We know that N > 1."
+KO;3;k2-fsa;multi_quantization;15ba47302b884bd91726cd6acb7d2895e4522b7f;Make quantization faster and more memory efficient.;"def minibatch_generator(data: Tensor,
+ 
+ if __name__ == ""__main__"":
+     logging.getLogger().setLevel(logging.INFO)
+-    #_test_train_from_file()
+     _test_joint_predictor()"
+OK;3;k2-fsa;multi_quantization;15ba47302b884bd91726cd6acb7d2895e4522b7f;Make quantization faster and more memory efficient.;"def minibatch_generator(data: Tensor,
+ 
+ if __name__ == ""__main__"":
+     logging.getLogger().setLevel(logging.INFO)
++    _test_train_from_file()
+     _test_joint_predictor()"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" 
+ A Python shared memory toolkit for process picture between different processes.
+ 
+ ### How to use
+ 
+ main process - 主进程
+ 
+ ```python
+-# optional
+ import cv2
+-from shared_memory_toolkit import dump_image_into_shared_memory
+ 
+-image = cv2.imread('test.pic')
+-dump_image_into_shared_memory('uuid_content', image)
+-```
+ 
+-sub process - 子进程
+ 
+-```python
+-from shared_memory_toolkit import load_image_from_shared_memory
+ 
+-# ... some other codes
+ 
+-image = load_image_from_shared_memory('uuid_content')
+ ```
+ 
+-主进程和子进程中的image将会完全保持一致：由同样的bytes转换而来。
+-
+ #### TODO:
+ 
+-1. unittest for raw_image.
+-2. base64_image module.
+-3. README and docs."
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" 
+ A Python shared memory toolkit for process picture between different processes.
+ 
++# Upgrade: 支持读写不同形状的图片，读写不同大小的共享内存
++
+ ### How to use
+ 
+ main process - 主进程
+ 
+ ```python
++from shared_memory_toolkit import load_image_from_shared_memory, dump_image_into_shared_memory
++
++# load image
+ import cv2
+ 
++raw_image = cv2.imread('image')
+ 
++image_shm_name = 'camera_1817'
++dump_image_into_shared_memory(image_shm_name, raw_image)
+ 
++# in other process
+ 
++image = load_image_from_shared_memory('camera_1817')
+ 
++# raw_image == image
+ ```
+ 
+ #### TODO:
+ 
++1. base64_image module."
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+# -*- coding: utf-8 -*-
++""""""setup with setuptools.""""""
++
++from setuptools import setup, find_packages
++
++setup(
++    name='stream_watcher',
++    version='0.1',
++    keywords='Stream',
++    description='A Pythonic way to manage streams in one file.',
++    author='Logic',
++    author_email='logic.irl@outlook.com',
++    url='https://github.com/TheStar-LikeDust/shared_memory_toolkit.git',
++    python_requires='>=3.8',
++    packages=find_packages(exclude=['tests*']),
++    license='Apache License 2.0'
++)"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" """"""
+ 
+ """"""
+ 
+ from .raw_image import dump_image_into_shared_memory, load_image_from_shared_memory
+ 
+-from .sync import initial_sync_in_fork, initial_sync_in_spawn"
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" """"""
+ 
+ """"""
++# system
++from .sync import initial_sync_in_fork, initial_sync_in_spawn
+ 
++# base
++from .core import get_share_memory
+ from .raw_image import dump_image_into_shared_memory, load_image_from_shared_memory
+ 
++# extra
++# TODO:"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" """"""Dict[str, SharedMemory]: 存储共享内存名字和共享内存实体对象的共享内存对象字典""""""
+ 
+ 
+-def _get_share_memory(shared_memory_name: str) -> Tuple[SharedMemory, Lock]:
+     """"""从共享内存映射表中加载一个共享内存，返回共享内存对象和对应的锁。
+ 
+-    如果不存在（第一次加载）共享内存，则会创建一个FIX_LENGTH大小的共享内存，和相应的锁。
+-
+-    Note:
+-        如果不在同一个进程下也可以相互访问共享内存。
+-
+-    Note:
+-        如果执行了initial_shared_memory_lock，则会通过一个跨进程字典来使不同进程之间保持同一个锁。
+ 
+     Args:
+-        shared_memory_name (str): 共享内存名字。
+ 
+     Returns:
+-        Tuple[SharedMemory, Lock]: 共享内存和锁的元组。
+     """"""
+     # 获取此操作的锁
+     lock = get_shm_lock(shared_memory_name)
+@@ -62,8 +57,11 @@ def _get_share_memory(shared_memory_name: str) -> Tuple[SharedMemory, Lock]:
+             # 同步：尝试创建
+             # case: 系统中不存在此共享内存，则创建一个新的共享内存区
+             try:
+-                shared = SharedMemory(name=shared_memory_name, create=True, size=FIX_LENGTH)
+-                assert len(shared.buf) == FIX_LENGTH
+             # case: 系统中存在此共享内存，则创建共享内存对象并放入当前进程的共享内存对象字典
+             except FileExistsError:
+                 shared = SharedMemory(name=shared_memory_name, create=False)"
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" """"""Dict[str, SharedMemory]: 存储共享内存名字和共享内存实体对象的共享内存对象字典""""""
+ 
+ 
++def get_share_memory(shared_memory_name: str, memory_size: int = None) -> Tuple[SharedMemory, Lock]:
+     """"""从共享内存映射表中加载一个共享内存，返回共享内存对象和对应的锁。
+ 
++    如果不存在此（第一次加载）共享内存，则会创建一个FIX_LENGTH大小的共享内存，和相应的锁。
+ 
+     Args:
++        shared_memory_name (str): 共享内存名
++        memory_size (int, optional): 共享内存大小. Defaults to None.
+ 
+     Returns:
++        Tuple[SharedMemory, Lock]: 共享内存和对应的锁
+     """"""
+     # 获取此操作的锁
+     lock = get_shm_lock(shared_memory_name)
+@@ -62,8 +57,11 @@ def _get_share_memory(shared_memory_name: str) -> Tuple[SharedMemory, Lock]:
+             # 同步：尝试创建
+             # case: 系统中不存在此共享内存，则创建一个新的共享内存区
+             try:
++                shared = SharedMemory(
++                    name=shared_memory_name,
++                    create=True,
++                    size=memory_size if memory_size else FIX_LENGTH
++                )
+             # case: 系统中存在此共享内存，则创建共享内存对象并放入当前进程的共享内存对象字典
+             except FileExistsError:
+                 shared = SharedMemory(name=shared_memory_name, create=False)"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" # -*- coding: utf-8 -*-
+ """"""numpy格式图片的读取和写入。
+ 
+-
+ 全局变量:
+ 
+-    1. IMAGE_SHAPE
+ 
+ 函数:
+ 
+-    1. dump_image_into_shared_memory::
+-
+-        Dump image
+-
+-    2. load_image_from_shared_memory::
+-
+-        Load image
+-
+-Note:
+-
+-    可跨进程使用
+ 
+ 
+ """"""
+ import numpy
+ 
+-from .core import _get_share_memory, FIX_LENGTH
+ 
+-IMAGE_SHAPE = (1080, 1920, 3)
+ """"""图像的默认形状""""""
+ 
+ 
+-def dump_image_into_shared_memory(shared_memory_name: str, image: numpy.ndarray) -> memoryview:
+     """"""将当前的图片dump成共享内存放入当前的共享内存映射中，此操作加锁
+ 
+     Args:
+         shared_memory_name (str): 共享内存名
+         image (numpy.ndarray): numpy格式图片
+ 
+     Returns:
+-        memoryview: 内存对象（共享内存的.buf属性）
+     """"""
+-    shared_memory, lock = _get_share_memory(shared_memory_name)
+ 
+     with lock:
+         shared_memory.buf[:FIX_LENGTH] = image.tobytes()
+-    return shared_memory.buf
+ 
+ 
+-def load_image_from_shared_memory(shared_memory_name: str) -> numpy.ndarray:
+     """"""从当前的共享内存映射中读取相应的共享内存并转换为图像，此操作加锁
+ 
+     Args:
+         shared_memory_name (str): 共享内存名
+ 
+     Returns:
+         numpy.ndarray: numpy格式图片
+     """"""
+-    shared_memory, lock = _get_share_memory(shared_memory_name)
+ 
+     with lock:
+-        image = numpy.frombuffer(shared_memory.buf, dtype=numpy.uint8)[:FIX_LENGTH].reshape(IMAGE_SHAPE)
+     return image"
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" # -*- coding: utf-8 -*-
+ """"""numpy格式图片的读取和写入。
+ 
+ 全局变量:
+ 
++    1. IMAGE_SHAPE: 默认图片的形状
+ 
+ 函数:
+ 
++    1. dump_image_into_shared_memory: Dump image
++    2. load_image_from_shared_memory: Load image
+ 
++TODO:
+ 
++    1. 基于shm的numpy数组
+ """"""
++from typing import Tuple
++from multiprocessing.shared_memory import SharedMemory
++
+ import numpy
+ 
++from .core import get_share_memory, FIX_LENGTH
+ 
++DEFAULT_IMAGE_SHAPE: Tuple[int, int, int] = (1080, 1920, 3)
+ """"""图像的默认形状""""""
+ 
++get_image_size = lambda x: x[0] * x[1] * x[2]
++""""""获取图像大小""""""
++
+ 
++def dump_image_into_shared_memory(
++        shared_memory_name: str,
++        image: numpy.ndarray,
++        memory_size: int = get_image_size(DEFAULT_IMAGE_SHAPE),
++) -> SharedMemory:
+     """"""将当前的图片dump成共享内存放入当前的共享内存映射中，此操作加锁
+ 
+     Args:
+         shared_memory_name (str): 共享内存名
+         image (numpy.ndarray): numpy格式图片
++        memory_size (int): 图片格式大小，默认为默认图像形状的大小. Default is 6220800
+ 
+     Returns:
++        SharedMemory: 共享内存对象
+     """"""
++    shared_memory, lock = get_share_memory(shared_memory_name, memory_size)
+ 
+     with lock:
+         shared_memory.buf[:FIX_LENGTH] = image.tobytes()
++    return shared_memory
+ 
+ 
++def load_image_from_shared_memory(
++        shared_memory_name: str,
++        image_shape: Tuple[int, int, int] = DEFAULT_IMAGE_SHAPE,
++) -> numpy.ndarray:
+     """"""从当前的共享内存映射中读取相应的共享内存并转换为图像，此操作加锁
+ 
+     Args:
+         shared_memory_name (str): 共享内存名
++        image_shape (Tuple[int, int, int]): 默认图像形状. Default is (1080, 1920, 3)
+ 
+     Returns:
+         numpy.ndarray: numpy格式图片
+     """"""
++    shared_memory, lock = get_share_memory(shared_memory_name)
+ 
+     with lock:
++        image = numpy.frombuffer(shared_memory.buf, dtype=numpy.uint8)[:get_image_size(image_shape)].reshape(
++            image_shape)
+     return image"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" def get_shm_lock(shm_name) -> Lock:
+     """"""获取共享内存对应的跨进程锁""""""
+ 
+     # 同步：先查找映射字典中是否有该共享内存
+     with _lock:
+         # case: 不存在共享内存，则需要创建。
+@@ -57,7 +61,7 @@ def initial_sync_in_fork(lock_number: int = 64) -> Tuple[Lock, Dict[str, int], L
+ 
+ 
+ def initial_sync_in_spawn(lock_number: int = 64) -> Tuple[Lock, Dict[str, int], List[Lock]]:
+-    """"""Spawn方式的启动：需要在主进程先调用此方法，再将同步对象手动放入子进程中
+ 
+     Args:
+         lock_number (int, optional): 子进程的对应的锁数量. Defaults to 64.
+@@ -75,7 +79,7 @@ def initial_sync_in_spawn(lock_number: int = 64) -> Tuple[Lock, Dict[str, int],
+ 
+ 
+ def synchronization_setter(lock: Lock, name_index_mapper: Dict[str, int], lock_list: List[Lock]) -> NoReturn:
+-    """"""用于Spawn启动，手动设置子进程的同步对象
+ 
+     Args:
+         lock (Lock): 控制映射表的锁"
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";" def get_shm_lock(shm_name) -> Lock:
+     """"""获取共享内存对应的跨进程锁""""""
+ 
++    # 如果没有初始化进程间锁，则会使用默认的锁。
++    if not _lock_list:
++        return _lock
++
+     # 同步：先查找映射字典中是否有该共享内存
+     with _lock:
+         # case: 不存在共享内存，则需要创建。
+@@ -57,7 +61,7 @@ def initial_sync_in_fork(lock_number: int = 64) -> Tuple[Lock, Dict[str, int], L
+ 
+ 
+ def initial_sync_in_spawn(lock_number: int = 64) -> Tuple[Lock, Dict[str, int], List[Lock]]:
++    """"""Spawn方式的启动：需要在主进程先调用此方法，再将同步对象手动放入子进程中。
+ 
+     Args:
+         lock_number (int, optional): 子进程的对应的锁数量. Defaults to 64.
+@@ -75,7 +79,7 @@ def initial_sync_in_spawn(lock_number: int = 64) -> Tuple[Lock, Dict[str, int],
+ 
+ 
+ def synchronization_setter(lock: Lock, name_index_mapper: Dict[str, int], lock_list: List[Lock]) -> NoReturn:
++    """"""用于Spawn启动时，手动传入子进程的同步对象。
+ 
+     Args:
+         lock (Lock): 控制映射表的锁"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+import unittest
++
++
++class MyTestCase(unittest.TestCase):
++    def test_something(self):
++        self.assertEqual(True, False)  # add assertion here
++
++
++if __name__ == '__main__':
++    unittest.main()"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+# -*- coding: utf-8 -*-
++""""""Unitest testcases.
++
++
++"""""""
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+# -*- coding: utf-8 -*-
++""""""Example Google style docstrings.
++
++Example:
++    Examples can be given using either the ``Example`` or ``Examples``
++    sections. Sections support any reStructuredText formatting, including
++    literal blocks::
++
++        $ python example_google.py
++
++Attributes:
++    module_level_variable1 (int): Module level variables may be documented in
++        either the ``Attributes`` section of the module docstring, or in an
++        inline docstring immediately following the variable.
++
++Todo:
++    * For module TODOs
++    * You have to also use ``sphinx.ext.todo`` extension
++
++.. _Google Python Style Guide:
++   http://google.github.io/styleguide/pyguide.html
++
++"""""""
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+import time
++import unittest
++
++import random
++from multiprocessing import Process, shared_memory
++from concurrent.futures import ProcessPoolExecutor
++
++from shared_memory_toolkit.core import get_share_memory
++
++
++def dump_bytes(shm_name: str, random_bytes: bytes):
++    shm, lock = get_share_memory(shm_name)
++
++    shm.buf[:len(random_bytes)] = random_bytes
++
++
++def load_bytes(shm_name: str) -> bytes:
++    shm, lock = get_share_memory(shm_name)
++
++    return bytes(shm.buf)
++
++
++def dump_bytes_in_process(shm_name: str, random_bytes: bytes):
++    # cannot pickle local function as subprocess
++    p = Process(target=dump_bytes, args=(shm_name, random_bytes))
++    p.daemon = True
++    p.start()
++    p.join()
++
++
++def get_lock_id(shm_name):
++    shm, lock = get_share_memory(shm_name)
++    print(id(lock))
++
++    return id(lock)
++
++
++class CoreTestCase(unittest.TestCase):
++
++    def test_default_property(self):
++        """"""默认的各项属性""""""
++        from shared_memory_toolkit import core
++
++        with self.subTest('Default FIX_LENGTH: 6220800'):
++            assert core.FIX_LENGTH == 6220800
++
++        with self.subTest('Default _share_memory_cache_mapper: empty'):
++            assert core._share_memory_cache_mapper == {}
++
++    def test_get_share_memory_same_name(self):
++        """"""_get_share_memory: 相同名字加载相同的共享内存""""""
++        same_name = 'same_name'
++
++        shm_0, lock_0 = get_share_memory(same_name)
++        shm_1, lock_1 = get_share_memory(same_name)
++
++        assert shm_0.name == shm_1.name
++        assert shm_0.buf == shm_1.buf
++
++    def test_get_shm_in_different_process(self):
++        """"""主进程创建后，子进程写入，共享内存产生相同变化""""""
++        random_bytes_content = random.randbytes(1920 * 1080 * 3)
++
++        # 必须由主进程先创建共享内存 否则子进程后退出时会自动销毁
++        shm_in_main, lock_main = get_share_memory('same_name')
++
++        # 子进程写入
++        dump_bytes_in_process(shm_name='same_name', random_bytes=random_bytes_content)
++
++        assert bytes(shm_in_main.buf) == random_bytes_content
++
++
++if __name__ == '__main__':
++    unittest.main()"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+import unittest
++
++from shared_memory_toolkit.sync import get_shm_lock
++
++
++class MyTestCase(unittest.TestCase):
++    def test_get_shm_lock_without_initial(self):
++        """"""不初始化""""""
++
++        lock_0 = get_shm_lock('test_memory_0')
++        lock_1 = get_shm_lock('test_memory_1')
++
++        assert lock_0 == lock_1
++
++
++if __name__ == '__main__':
++    unittest.main()"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+import time
++import unittest
++
++from multiprocessing import get_start_method, Process
++from concurrent.futures import ProcessPoolExecutor
++from shared_memory_toolkit.sync import initial_sync_in_fork, get_shm_lock
++
++
++def process_state(*args):
++    from shared_memory_toolkit.sync import _lock, _lock_list, _name_index_mapper
++
++    return _lock._id, _name_index_mapper._id, _lock_list._id
++
++
++def process_id(n: str = 'name'):
++    lock = get_shm_lock(n)
++    return lock._id
++
++
++@unittest.skipUnless(condition=get_start_method() == 'fork', reason='fork')
++class SyncForkTestCase(unittest.TestCase):
++
++    def test_initial_sync_in_fork(self):
++        syncs = initial_sync_in_fork()
++
++        with ProcessPoolExecutor(4) as pool:
++            sub_results = [pool.submit(process_state).result() for _ in range(10)]
++
++        with self.subTest('same lock id'):
++            for sub_result in sub_results:
++                self.assertEquals(sub_result[0], syncs[0]._id)
++
++        with self.subTest('same mapper id'):
++            for sub_result in sub_results:
++                self.assertEquals(sub_result[1], syncs[1]._id)
++
++        with self.subTest('same lock_list id'):
++            for sub_result in sub_results:
++                self.assertEquals(sub_result[2], syncs[2]._id)
++
++    def test_get_shm_lock_same_lock(self):
++        """"""一致的名称返回一致的锁""""""
++        initial_sync_in_fork()
++
++        lock_0 = get_shm_lock('uuid')
++        lock_1 = get_shm_lock('uuid')
++
++        assert lock_0._id == lock_1._id
++
++    def test_get_shm_lock_between_process(self):
++        initial_sync_in_fork()
++
++        with ProcessPoolExecutor(4) as pool:
++            futures = [pool.submit(process_id) for _ in range(10)]
++            ids = [_.result() for _ in futures]
++
++        [self.assertEquals(_, ids[0]) for _ in ids]
++
++
++if __name__ == '__main__':
++    unittest.main()"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+import time
++import unittest
++from concurrent.futures import ProcessPoolExecutor
++from multiprocessing import get_start_method, Process
++
++from shared_memory_toolkit.sync import initial_sync_in_spawn, get_shm_lock, synchronization_setter
++
++
++def process_state(*args):
++    synchronization_setter(*args)
++
++    from shared_memory_toolkit.sync import _lock, _lock_list, _name_index_mapper
++
++    return _lock._id, _name_index_mapper._id, _lock_list._id
++
++
++def process_id(n: str = 'name'):
++    lock = get_shm_lock(n)
++    return lock._id
++
++
++@unittest.skipUnless(condition=get_start_method() == 'spawn', reason='spawn')
++class SyncSpawnTestCase(unittest.TestCase):
++    def test_initial_sync_in_spawn(self):
++        syncs = initial_sync_in_spawn()
++
++        with ProcessPoolExecutor(4) as pool:
++            sub_results = [pool.submit(process_state, *syncs).result() for _ in range(10)]
++
++        with self.subTest('same lock id'):
++            for sub_result in sub_results:
++                self.assertEquals(sub_result[0], syncs[0]._id)
++
++        with self.subTest('same mapper id'):
++            for sub_result in sub_results:
++                self.assertEquals(sub_result[1], syncs[1]._id)
++
++        with self.subTest('same lock_list id'):
++            for sub_result in sub_results:
++                self.assertEquals(sub_result[2], syncs[2]._id)
++
++    def test_get_shm_lock_same_lock(self):
++        """"""一致的名称返回一致的锁""""""
++        sync = initial_sync_in_spawn()
++        synchronization_setter(*sync)
++
++        lock_0 = get_shm_lock('uuid')
++        lock_1 = get_shm_lock('uuid')
++
++        assert lock_0._id == lock_1._id
++
++    def test_get_shm_lock_between_process(self):
++        _, d, l = initial_sync_in_spawn()
++
++        from shared_memory_toolkit.sync import synchronization_setter
++        with ProcessPoolExecutor(4, initializer=synchronization_setter, initargs=(_, d, l)) as pool:
++            futures = [pool.submit(process_id) for _ in range(10)]
++            ids = [_.result() for _ in futures]
++
++        [self.assertEquals(_, ids[0]) for _ in ids]
++
++
++if __name__ == '__main__':
++    unittest.main()"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+# -*- coding: utf-8 -*-
++""""""Example Google style docstrings.
++
++Example:
++    Examples can be given using either the ``Example`` or ``Examples``
++    sections. Sections support any reStructuredText formatting, including
++    literal blocks::
++
++        $ python example_google.py
++
++Attributes:
++    module_level_variable1 (int): Module level variables may be documented in
++        either the ``Attributes`` section of the module docstring, or in an
++        inline docstring immediately following the variable.
++
++Todo:
++    * For module TODOs
++    * You have to also use ``sphinx.ext.todo`` extension
++
++.. _Google Python Style Guide:
++   http://google.github.io/styleguide/pyguide.html
++
++"""""""
+KO;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;eb5e619def82c8986747de19fbea1bece06f45b0;"Feat: dynamic shared_memory and picture shape.
+
+1. The refactor tests.
+2. Dynamic load/get
+3. Fix some docstring
+4. setup.py";"+import unittest
++
++
++class MyTestCase(unittest.TestCase):
++    def test_something(self):
++        pass
++
++if __name__ == '__main__':
++    unittest.main()"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;dd83a8908ffdb3499d46074833626399ad0ef3bf;"initial
+
+1. core: manage the shared memory
+2. raw_image: dump/load image";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;dd83a8908ffdb3499d46074833626399ad0ef3bf;"initial
+
+1. core: manage the shared memory
+2. raw_image: dump/load image";"+# -*- coding: utf-8 -*-
++""""""
++
++""""""
++
++from .core import initial_shared_memory_lock
++
++from .raw_image import dump_image_into_shared_memory, load_image_from_shared_memory"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;dd83a8908ffdb3499d46074833626399ad0ef3bf;"initial
+
+1. core: manage the shared memory
+2. raw_image: dump/load image";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;dd83a8908ffdb3499d46074833626399ad0ef3bf;"initial
+
+1. core: manage the shared memory
+2. raw_image: dump/load image";"+# -*- coding: utf-8 -*-
++""""""The core of shared memory toolkit.
++
++基础的初始化以及最为核心的加载共享内存函数。
++
++全局变量:
++
++    1. FIX_LENGTH::
++
++        共享内存的固定大小，一般美容嗯为图片的大小: 1920 * 1080 * 3 == 6220800
++
++    2. _share_memory_cache_mapper::
++
++        共享内存对象字典，通过此字典来缓存共享内存对象而不需要每次实例化SharedMemory
++
++    3. _share_memory_lock_mapper 和 _manager::
++
++        用于控制共享内存的同步读取/写入
++
++
++""""""
++
++from multiprocessing.shared_memory import SharedMemory
++from multiprocessing import Manager, Lock
++from typing import Dict, Tuple, Optional, NoReturn
++
++FIX_LENGTH: int = 6220800
++""""""固定数据块（图片）的大小，用于从不定大小的共享内存中获取定长数据，默认为1920*1080*3大小的图片。""""""
++
++_share_memory_cache_mapper: Dict[str, SharedMemory] = {}
++""""""Dict[str, SharedMemory]: 存储共享内存名字和共享内存实体对象的共享内存对象字典""""""
++
++_share_memory_lock_mapper: Optional[Dict[str, Lock]] = {}
++""""""Dict[str, Lock]: 存储共享内存名和对应的锁的映射关系字典""""""
++
++_manager: Optional[Manager] = None
++""""""共享内存模块的Manager，主要用于生成限制对memory同一时间的写入和读取""""""
++
++
++def initial_shared_memory_lock() -> NoReturn:
++    """"""初始化共享内存和锁的映射，需要在使用模块前在主进程执行。
++
++    执行此函数，锁字典会变成跨进程字典。
++
++    不执行此函数时，会产生一个普通的跨进程锁
++    """"""
++    global _manager, _share_memory_lock_mapper
++    _manager = Manager()
++    _share_memory_lock_mapper = _manager.dict()
++
++
++def _get_share_memory(shared_memory_name: str) -> Tuple[SharedMemory, Lock]:
++    """"""从共享内存映射表中加载一个共享内存，返回共享内存对象和对应的锁。
++
++    如果不存在（第一次加载）共享内存，则会创建一个FIX_LENGTH大小的共享内存，和相应的锁。
++
++    Note:
++        如果不在同一个进程下也可以相互访问共享内存。
++
++    Note:
++        如果执行了initial_shared_memory_lock，则会通过一个跨进程字典来使不同进程之间保持同一个锁。
++
++    Args:
++        shared_memory_name (str): 共享内存名字。
++
++    Returns:
++        Tuple[SharedMemory, Lock]: 共享内存和锁的元组。
++    """"""
++    # 从当前进程的共享内存对象字典中获取共享内存对象
++    shared = _share_memory_cache_mapper.get(shared_memory_name)
++
++    # case: 当前进程中暂存的共享内存对象字典中不存在该共享内存
++    if shared is None:
++        # 尝试创建
++        # case: 系统中不存在此共享内存，则创建一个新的共享内存区
++        try:
++            shared = SharedMemory(name=shared_memory_name, create=True, size=FIX_LENGTH)
++            assert len(shared.buf) == FIX_LENGTH
++        # case: 系统中存在此共享内存，则创建共享内存对象并放入当前进程的共享内存对象字典
++        except FileExistsError:
++            shared = SharedMemory(name=shared_memory_name, create=False)
++
++        _share_memory_cache_mapper[shared_memory_name] = shared
++
++    # case: 当前找到的共享内存大小小于FIX_LENGTH，则关闭改共享内存然后重新创建
++    if len(shared.buf) <= FIX_LENGTH:
++        shared.close()
++        shared.unlink()
++        shared = SharedMemory(name=shared_memory_name, create=True, size=FIX_LENGTH)
++
++        _share_memory_cache_mapper[shared_memory_name] = shared
++
++    # 如果不存在锁对象，则创建一个锁对象
++    if shared_memory_name not in _share_memory_lock_mapper:
++        # 如果没有manager，则会创建一个普通的进程锁
++        lock = _manager.Lock() if _manager is not None else Lock()
++        _share_memory_lock_mapper[shared_memory_name] = lock
++
++    return _share_memory_cache_mapper[shared_memory_name], _share_memory_lock_mapper[shared_memory_name]"
+KO;4;TheStar-LikeDust;shared_memory_toolkit;dd83a8908ffdb3499d46074833626399ad0ef3bf;"initial
+
+1. core: manage the shared memory
+2. raw_image: dump/load image";
+OK;4;TheStar-LikeDust;shared_memory_toolkit;dd83a8908ffdb3499d46074833626399ad0ef3bf;"initial
+
+1. core: manage the shared memory
+2. raw_image: dump/load image";"+# -*- coding: utf-8 -*-
++""""""numpy格式图片的读取和写入。
++
++
++全局变量:
++
++    1. IMAGE_SHAPE
++
++函数:
++
++    1. dump_image_into_shared_memory::
++
++        Dump image
++
++    2. load_image_from_shared_memory::
++
++        Load image
++
++Note:
++
++    可跨进程使用
++
++
++""""""
++import numpy
++
++from .core import _get_share_memory, FIX_LENGTH
++
++IMAGE_SHAPE = (1080, 1920, 3)
++""""""图像的默认形状""""""
++
++
++def dump_image_into_shared_memory(shared_memory_name: str, image: numpy.ndarray) -> memoryview:
++    """"""将当前的图片dump成共享内存放入当前的共享内存映射中，此操作加锁
++
++    Args:
++        shared_memory_name (str): 共享内存名
++        image (numpy.ndarray): numpy格式图片
++
++    Returns:
++        memoryview: 内存对象（共享内存的.buf属性）
++    """"""
++    shared_memory, lock = _get_share_memory(shared_memory_name)
++
++    with lock:
++        shared_memory.buf[:FIX_LENGTH] = image.tobytes()
++    return shared_memory.buf
++
++
++def load_image_from_shared_memory(shared_memory_name: str) -> numpy.ndarray:
++    """"""从当前的共享内存映射中读取相应的共享内存并转换为图像，此操作加锁
++
++    Args:
++        shared_memory_name (str): 共享内存名
++
++    Returns:
++        numpy.ndarray: numpy格式图片
++    """"""
++    shared_memory, lock = _get_share_memory(shared_memory_name)
++
++    with lock:
++        image = numpy.frombuffer(shared_memory.buf, dtype=numpy.uint8)[:FIX_LENGTH].reshape(IMAGE_SHAPE)
++    return image"
+KO;5;bubbliiiing;mask-rcnn-tf2;39da8479407198fe9189d027fb6982d482697d62;update set_memory_growth;" import os
+ import os.path as osp
+ 
+ from PIL import Image
+ from pycocotools.coco import COCO
+ from pycocotools.cocoeval import COCOeval
+@@ -10,6 +11,10 @@
+ from utils.utils import get_classes, get_coco_label_map
+ from utils.utils_map import Make_json, prep_metrics
+ 
+ if __name__ == '__main__':
+     #------------------------------------------------------------------------------------------------------------------#
+     #   map_mode用于指定该文件运行时计算的内容"
+OK;5;bubbliiiing;mask-rcnn-tf2;39da8479407198fe9189d027fb6982d482697d62;update set_memory_growth;" import os
+ import os.path as osp
+ 
++import tensorflow as tf
+ from PIL import Image
+ from pycocotools.coco import COCO
+ from pycocotools.cocoeval import COCOeval
+@@ -10,6 +11,10 @@
+ from utils.utils import get_classes, get_coco_label_map
+ from utils.utils_map import Make_json, prep_metrics
+ 
++gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
++for gpu in gpus:
++    tf.config.experimental.set_memory_growth(gpu, True)
++
+ if __name__ == '__main__':
+     #------------------------------------------------------------------------------------------------------------------#
+     #   map_mode用于指定该文件运行时计算的内容"
+KO;5;bubbliiiing;mask-rcnn-tf2;39da8479407198fe9189d027fb6982d482697d62;update set_memory_growth;" 
+ import cv2
+ import numpy as np
+ from PIL import Image
+ 
+ from mask_rcnn import MASK_RCNN
+ 
+ if __name__ == ""__main__"":
+     mask_rcnn = MASK_RCNN()
+     #----------------------------------------------------------------------------------------------------------#"
+OK;5;bubbliiiing;mask-rcnn-tf2;39da8479407198fe9189d027fb6982d482697d62;update set_memory_growth;" 
+ import cv2
+ import numpy as np
++import tensorflow as tf
+ from PIL import Image
+ 
+ from mask_rcnn import MASK_RCNN
+ 
++gpus = tf.config.experimental.list_physical_devices(device_type='GPU')
++for gpu in gpus:
++    tf.config.experimental.set_memory_growth(gpu, True)
++
+ if __name__ == ""__main__"":
+     mask_rcnn = MASK_RCNN()
+     #----------------------------------------------------------------------------------------------------------#"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"jobs:
+           - 14.x
+   publish_sdk:
+     name: Publish SDKs
+-    runs-on: ${{ matrix.language == 'nodejs' && 'macos-latest' || 'ubuntu-latest' }}
+     needs: publish_binary
+     steps:
+       - name: Checkout Repo"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"jobs:
+           - 14.x
+   publish_sdk:
+     name: Publish SDKs
++    runs-on: 'ubuntu-latest'
+     needs: publish_binary
+     steps:
+       - name: Checkout Repo"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"-VERSION         := 0.1.11
+ 
+ PACK            := azure-justrun
+ PROJECT         := github.com/pulumi/pulumi-${PACK}
+@@ -88,8 +88,7 @@ gen_nodejs_sdk::
+ build_nodejs_sdk:: gen_nodejs_sdk
+ 	cd sdk/nodejs/ && \
+ 		yarn install && \
+-		yarn run tsc --version && \
+-		yarn run tsc && \
+ 		cp -R scripts/ bin && \
+ 		cp ../../README.md ../../LICENSE package.json yarn.lock ./bin/ && \
+ 		sed -i.bak -e ""s/\$${VERSION}/$(VERSION)/g"" ./bin/package.json && \"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"+VERSION         := 0.1.12
+ 
+ PACK            := azure-justrun
+ PROJECT         := github.com/pulumi/pulumi-${PACK}
+@@ -88,8 +88,7 @@ gen_nodejs_sdk::
+ build_nodejs_sdk:: gen_nodejs_sdk
+ 	cd sdk/nodejs/ && \
+ 		yarn install && \
++		NODE_OPTIONS=--max-old-space-size=8192 yarn run tsc --diagnostics \
+ 		cp -R scripts/ bin && \
+ 		cp ../../README.md ../../LICENSE package.json yarn.lock ./bin/ && \
+ 		sed -i.bak -e ""s/\$${VERSION}/$(VERSION)/g"" ./bin/package.json && \"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"-*.pyc
+-venv/"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"+*.pyc
++venv/"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"-""""""An Azure RM Python Pulumi program""""""
+-
+-import pulumi
+-import pulumi_azure_justrun 
+-
+-
+-webapp = pulumi_azure_justrun.Webapp(""mywebapp"", file_path=""./www"")
+-
+-pulumi.export(""url"",webapp.url)"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"+""""""An Azure RM Python Pulumi program""""""
++
++import pulumi
++import pulumi_azure_justrun 
++
++
++webapp = pulumi_azure_justrun.Webapp(""mywebapp"", file_path=""./www"")
++
++pulumi.export(""url"",webapp.url)"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"-pulumi>=3.0.0,<4.0.0
+-pulumi-azure-native>=1.0.0,<2.0.0"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"+pulumi>=3.0.0,<4.0.0
++pulumi-azure-native>=1.0.0,<2.0.0"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+   ""name"": ""@pulumi/azure-justrun"",
+-  ""version"": ""0.1.11"",
+   ""devDependencies"": {
+     ""@types/node"": ""^17.0.40"",
+     ""@vercel/ncc"": ""^0.28.6"","
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+   ""name"": ""@pulumi/azure-justrun"",
++  ""version"": ""0.1.12"",
+   ""devDependencies"": {
+     ""@types/node"": ""^17.0.40"",
+     ""@vercel/ncc"": ""^0.28.6"","
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+     ""name"": ""azure-justrun"",
+-    ""version"": ""v0.1.11"",
+     ""types"": {
+         ""azure-justrun:index:PublicAccess"":{
+             ""type"": ""string"","
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+     ""name"": ""azure-justrun"",
++    ""version"": ""v0.1.12"",
+     ""types"": {
+         ""azure-justrun:index:PublicAccess"":{
+             ""type"": ""string"","
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+   ""resource"": true,
+   ""name"": ""azure-justrun"",
+-  ""version"": ""0.1.11""
+ }"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+   ""resource"": true,
+   ""name"": ""azure-justrun"",
++  ""version"": ""0.1.12""
+ }"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+   ""resource"": true,
+   ""name"": ""azure-justrun"",
+-  ""version"": ""0.1.11""
+ }"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+   ""resource"": true,
+   ""name"": ""azure-justrun"",
++  ""version"": ""0.1.12""
+ }"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+     ""name"": ""@pulumi/azure-justrun"",
+-    ""version"": ""0.1.11"",
+     ""scripts"": {
+         ""build"": ""tsc"",
+-        ""install"": ""node scripts/install-pulumi-plugin.js resource azure-justrun 0.1.11""
+     },
+     ""dependencies"": {
+         ""@pulumi/azure-native"": ""^1.0.0"",
+@@ -14,6 +14,6 @@
+     },
+     ""pulumi"": {
+         ""resource"": true,
+-        ""version"": ""0.1.11""
+     }
+ }"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+     ""name"": ""@pulumi/azure-justrun"",
++    ""version"": ""0.1.12"",
+     ""scripts"": {
+         ""build"": ""tsc"",
++        ""install"": ""node scripts/install-pulumi-plugin.js resource azure-justrun 0.1.12""
+     },
+     ""dependencies"": {
+         ""@pulumi/azure-native"": ""^1.0.0"",
+@@ -14,6 +14,6 @@
+     },
+     ""pulumi"": {
+         ""resource"": true,
++        ""version"": ""0.1.12""
+     }
+ }"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"-# Pulumi Component Provider Boilerplate (TypeScript)
+ 
+-This repo is a boilerplate showing how to create a Pulumi component provider written in TypeScript. You can search-replace `xyz` with the name of your desired provider as a starting point for creating a component provider for your component resources.
+ 
+-## Background
+-This repository is part of the [guide for authoring and publishing a Pulumi Package](https://www.pulumi.com/docs/guides/pulumi-packages/how-to-author).
+-
+-Learn about the concepts behind [Pulumi Packages](https://www.pulumi.com/docs/guides/pulumi-packages/#pulumi-packages) and, more specifically, [Pulumi Components](https://www.pulumi.com/docs/intro/concepts/resources/components/)
+-
+-## Sample xyz Component Provider
+-
+-An example `StaticPage` [component resource](https://www.pulumi.com/docs/intro/concepts/resources/#components) is available in `provider/cmd/pulumi-resource-xyz/staticPage.ts`. This component creates a static web page hosted in an AWS S3 Bucket. There is nothing special about `StaticPage` -- it is a typical component resource written in TypeScript.
+-
+-The component provider makes component resources available to other languages. The implementation is in `provider/cmd/pulumi-resource-xyz/provider.ts`. Each component resource in the provider must have an implementation in the `construct` method to create an instance of the requested component resource and return its `URN` and state (outputs). There is an initial implementation that demonstrates an implementation of `construct` for the example `StaticPage` component.
+-
+-A code generator is available which generates SDKs in TypeScript, Python, Go and .NET which are also checked in to the `sdk` folder. The SDKs are generated from a schema in `schema.json`. This file should be kept aligned with the component resources supported by the component provider implementation.
+-
+-An example of using the `StaticPage` component in TypeScript is in `examples/simple`.
+-
+-Note that the provider plugin (`pulumi-resource-xyz`) must be on your `PATH` to be used by Pulumi deployments. In this case, `pulumi-resource-xyz` is a platform-specific binary that includes its Node.js dependency along with the provider code, created using [pkg](https://github.com/vercel/pkg). By default, running `make install` will create the binary specific to your host environment.
+-
+-After running `make install`, `pulumi-resource-xyz` will be available in the `./bin` directory. You can add this to your path in bash with `export PATH=$PATH:$PWD/bin`.
+-
+-If creating a provider for distribution to other users, they will need the `pulumi-resource-xyz` directory on their `PATH`. See the Packaging section below for more on distributing the provider to users.
+-
+-## Prerequisites
+-
+-- Pulumi CLI
+-- Node.js
+-- Yarn
+-- Go 1.17 (to regenerate the SDKs)
+-- Python 3.6+ (to build the Python SDK)
+-- .NET Core SDK (to build the .NET SDK)
+-
+-## Build and Test
+-
+-```bash
+-# Build and install the provider
+-make install_provider
+-
+-# Regenerate SDKs
+-make generate
+-
+-# Ensure the pulumi-provider-xyz script is on PATH
+-$ export PATH=$PATH:$PWD/bin
+-
+-# Test Node.js SDK
+-$ make install_nodejs_sdk
+-$ cd examples/simple
+-$ yarn install
+-$ yarn link @pulumi/xyz
+-$ pulumi stack init test
+-$ pulumi config set aws:region us-east-1
+-$ pulumi up
+-```
+-
+-## Naming
+-
+-The `xyz` provider's plugin must be named `pulumi-resource-xyz` (in the format `pulumi-resource-<provider>`).
+-
+-While the provider plugin must follow this naming convention, the SDK package naming can be customized. TODO explain.
+-
+-## Packaging
+-
+-The provider plugin can be packaged into a tarball and hosted at a custom server URL to make it easier to distribute to users.
+-
+-Currently, five tarball files are necessary for Linux, macOS, and Windows (`pulumi-resource-xyz-v0.0.1-linux-amd64.tar.gz`, `pulumi-resource-xyz-v0.0.1-linux-arm64.tar.gz` `pulumi-resource-xyz-v0.0.1-darwin-amd64.tar.gz`, `pulumi-resource-xyz-v0.0.1-darwin-arm64.tar.gz`, `pulumi-resource-xyz-v0.0.1-windows-amd64.tar.gz`) each containing the same files: the platform-specific binary `pulumi-resource-xyz`, README and LICENSE. The fill set of binaries can be automatically generated using the command `make dist`.
+-
+-TODO explain custom server hosting in more detail.
+-
+-## Configuring CI and releases
+-
+-1. Follow the instructions laid out in the [deployment templates](./deployment-templates/README-DEPLOYMENT.md).
+-
+-
+-## Example component
+-
+-Let's look at the example `StaticPage` component resource in more detail.
+-
+-### Schema
+-
+-The example `StaticPage` component resource is defined in `schema.json`:
+-
+-```json
+-""resources"": {
+-    ""xyz:index:StaticPage"": {
+-        ""isComponent"": true,
+-        ""inputProperties"": {
+-            ""indexContent"": {
+-                ""type"": ""string"",
+-                ""description"": ""The HTML content for index.html.""
+-            }
+-        },
+-        ""requiredInputs"": [
+-            ""indexContent""
+-        ],
+-        ""properties"": {
+-            ""bucket"": {
+-                ""$ref"": ""/aws/v3.30.0/schema.json#/resources/aws:s3%2Fbucket:Bucket"",
+-                ""description"": ""The bucket resource.""
+-            },
+-            ""websiteUrl"": {
+-                ""type"": ""string"",
+-                ""description"": ""The website URL.""
+-            }
+-        },
+-        ""required"": [
+-            ""bucket"",
+-            ""websiteUrl""
+-        ]
+-    }
+-}
+-```
+-
+-The component resource's type token is `xyz:index:StaticPage` in the format of `<package>:<module>:<type>`. In this case, it's in the `xyz` package and `index` module. This is the same type token passed inside the implementation of `StaticPage` in `provider/cmd/pulumi-resource-xyz/staticPage.ts`, and also the same token referenced in `construct` in `provider/cmd/pulumi-resource-xyz/provider.ts`.
+-
+-This component has a required `indexContent` input property typed as `string`, and two required output properties: `bucket` and `websiteUrl`. Note that `bucket` is typed as the `aws:s3/bucket:Bucket` resource from the `aws` provider (in the schema the `/` is escaped as `%2F`).
+-
+-Since this component returns a type from the `aws` provider, each SDK must reference the associated Pulumi `aws` SDK for the language. For the .NET, Node.js, and Python SDKs, dependencies are specified in the `language` section of the schema:
+-
+-```json
+-""language"": {
+-    ""csharp"": {
+-        ""packageReferences"": {
+-            ""Pulumi"": ""2.*"",
+-            ""Pulumi.Aws"": ""3.*""
+-        }
+-    },
+-    ""nodejs"": {
+-        ""dependencies"": {
+-            ""@pulumi/aws"": ""^3.30.0""
+-        },
+-        ""devDependencies"": {
+-            ""typescript"": ""^3.7.0""
+-        }
+-    },
+-    ""python"": {
+-        ""requires"": {
+-            ""pulumi"": "">=2.21.2,<3.0.0"",
+-            ""pulumi-aws"": "">=3.30.0,<4.0.0""
+-        }
+-    }
+-}
+-```
+-
+-For the Go SDK, dependencies are specified in the `sdk/go.mod` file.
+-
+-### Implementation
+-
+-The implementation of this component is in `provider/cmd/pulumi-resource-xyz/staticPage.ts` and the structure of the component's inputs and outputs aligns with what is defined in `schema.json`:
+-
+-```typescript
+-export interface StaticPageArgs {
+-    indexContent: pulumi.Input<string>;
+-}
+-
+-export class StaticPage extends pulumi.ComponentResource {
+-    public readonly bucket: aws.s3.Bucket;
+-    public readonly websiteUrl: pulumi.Output<string>;
+-
+-    constructor(name: string, args: StaticPageArgs, opts?: pulumi.ComponentResourceOptions) {
+-        super(""xyz:index:StaticPage"", name, args, opts);
+-
+-        ...
+-    }
+-}
+-```
+-
+-The provider makes this component resource available in the `construct` method in `provider/cmd/pulumi-resource-xyz/provider.ts`. When `construct` is called and the `type` argument is `xyz:index:StaticPage`, we create an instance of the `StaticPage` component resource and return its `URN` and outputs as its state.
+-
+-
+-```typescript
+-async function constructStaticPage(name: string, inputs: pulumi.Inputs,
+-    options: pulumi.ComponentResourceOptions): Promise<provider.ConstructResult> {
+-
+-    // Create the component resource.
+-    const staticPage = new StaticPage(name, inputs as StaticPageArgs, options);
+-
+-    // Return the component resource's URN and outputs as its state.
+-    return {
+-        urn: staticPage.urn,
+-        state: {
+-            bucket: staticPage.bucket,
+-            websiteUrl: staticPage.websiteUrl,
+-        },
+-    };
+-}
+-```
+\ No newline at end of file"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;"+# Pulumi Azure JustRun
+ 
++Azure-JustRun allows you to deploy a static site to Azure in just a few lines of code.
+ 
++## Contributing
++When contributing to this package, make sure to bump the version in the schema.json as well as the makefile when preparing a new release, and then regenerate the SDKs before pushing. 
++Add tags of the form v0.0.0 AND sdk/v0.0.0
+\ No newline at end of file"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+   ""resource"": true,
+   ""name"": ""azure-justrun"",
+-  ""version"": ""0.1.11""
+ }"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" {
+   ""resource"": true,
+   ""name"": ""azure-justrun"",
++  ""version"": ""0.1.12""
+ }"
+KO;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" from subprocess import check_call
+ 
+ 
+-VERSION = ""0.1.11""
+-PLUGIN_VERSION = ""0.1.11""
+ 
+ class InstallPluginCommand(install):
+     def run(self):"
+OK;8;pulumi;pulumi-azure-justrun;94db53d88439ecba4cc938aafd8fe569b95f53c1;added more memory to node and moved back to ubuntu;" from subprocess import check_call
+ 
+ 
++VERSION = ""0.1.12""
++PLUGIN_VERSION = ""0.1.12""
+ 
+ class InstallPluginCommand(install):
+     def run(self):"
+KO;13;fmathiou;Replay-SLDA;f371be6bf9d9ed294740ba47541be1eec3c93976;Delete memory.py;"-from torch.utils.data import Dataset
+-from torchvision import transforms
+-import torch
+-import random
+-
+-
+-class Memory(Dataset):
+-    """"""Memory buffer used for rehearsal.
+-
+-    Attributes:
+-        max_samples (int): Maximum allowed number of samples to be stored.
+-        reservoir (list): Contains stored instances in the form [instance, label].
+-        seen_samples (int): Number of instances ecnountered so far.
+-        transform (Tansform): Transformation operation when replaying data.
+-    """"""
+-    
+-    def __init__(self, max_samples=200):
+-        super(Memory, self).__init__()
+-        self.max_samples = max_samples
+-        self.reservoir =[]
+-        self.seen_samples = 0
+-        self.transform = transforms.Compose([transforms.Resize(256), 
+-                                             transforms.CenterCrop(224),
+-                                             transforms.Normalize(mean=[0.485, 0.456, 0.406],
+-                                                                  std=[0.229, 0.224, 0.225])])
+-
+-    def __len__ (self):
+-        return len(self.reservoir)
+-        
+-    def __getitem__(self, index):
+-        sample = self.reservoir[index]
+-        return sample
+-        
+-    def reservoir_sampling(self, samples, labels):
+-        """"""Perform reservoir sampling.""""""
+-        nr_of_smaples = labels.shape[0]
+-        for i in range(nr_of_smaples):
+-            if(self.seen_samples < self.max_samples):
+-                self.seen_samples += 1
+-                self.reservoir.append([samples[i], labels[i]])
+-            else:
+-                self.seen_samples += 1   
+-                random_index = random.randrange(self.seen_samples)
+-                if(random_index < self.max_samples):
+-                    self.reservoir[random_index] = [samples[i], labels[i]]
+-
+-    def random_replay(self, batch_size):
+-        """"""Draw instances from the reservoir uniformly at random.
+-
+-        Args:
+-            batch_size (int): Numbber of instances to sample.
+-
+-        Returns:
+-            tuple: Samples and corresponding labels.
+-        """"""
+-        if(len(self.reservoir)) >= batch_size:
+-            random_indices = random.sample(range(len(self.reservoir)), batch_size)
+-            batch = list(map(self.__getitem__, random_indices))
+-            samples = list(map(lambda x: x[0], batch))
+-            samples = torch.stack(samples)
+-            samples = self.transform(samples)
+-            labels = list(map(lambda x: x[1], batch)) 
+-            labels = torch.stack(labels)
+-            
+-        else:
+-            samples = float('NaN')
+-            labels = float('NaN')
+-            
+-        return samples, labels
+\ No newline at end of file"
+OK;13;fmathiou;Replay-SLDA;f371be6bf9d9ed294740ba47541be1eec3c93976;Delete memory.py;\ No newline at end of file
+KO;13;fmathiou;Replay-SLDA;1d1898771f816f796a6c071f6592f21aa308fb72;Delete memory.py;"-from torch.utils.data import Dataset
+-from torchvision import transforms
+-import torch
+-import random
+-
+-
+-class Memory(Dataset):
+-    """"""Memory buffer used for rehearsal.
+-
+-    Attributes:
+-        max_samples (int): Maximum allowed number of samples to be stored.
+-        reservoir (list): Contains stored instances in the form [instance, label].
+-        seen_samples (int): Number of instances ecnountered so far.
+-        transform (Tansform): Transformation operation when replaying data.
+-    """"""
+-    
+-    def __init__(self, max_samples=200):
+-        super(Memory, self).__init__()
+-        self.max_samples = max_samples
+-        self.reservoir =[]
+-        self.seen_samples = 0
+-        self.transform = transforms.Compose([transforms.Resize(256), 
+-                                             transforms.CenterCrop(224),
+-                                             transforms.Normalize(mean=[0.485, 0.456, 0.406],
+-                                                                  std=[0.229, 0.224, 0.225])])
+-
+-    def __len__ (self):
+-        return len(self.reservoir)
+-        
+-    def __getitem__(self, index):
+-        sample = self.reservoir[index]
+-        return sample
+-        
+-    def reservoir_sampling(self, samples, labels):
+-        """"""Perform reservoir sampling.""""""
+-        nr_of_smaples = labels.shape[0]
+-        for i in range(nr_of_smaples):
+-            if(self.seen_samples < self.max_samples):
+-                self.seen_samples += 1
+-                self.reservoir.append([samples[i], labels[i]])
+-            else:
+-                self.seen_samples += 1   
+-                random_index = random.randrange(self.seen_samples)
+-                if(random_index < self.max_samples):
+-                    self.reservoir[random_index] = [samples[i], labels[i]]
+-
+-    def random_replay(self, batch_size):
+-        """"""Draw instances from the reservoir uniformly at random.
+-
+-        Args:
+-            batch_size (int): Numbber of instances to sample.
+-
+-        Returns:
+-            tuple: Samples and corresponding labels.
+-        """"""
+-        if(len(self.reservoir)) >= batch_size:
+-            random_indices = random.sample(range(len(self.reservoir)), batch_size)
+-            batch = list(map(self.__getitem__, random_indices))
+-            samples = list(map(lambda x: x[0], batch))
+-            samples = torch.stack(samples)
+-            samples = self.transform(samples)
+-            labels = list(map(lambda x: x[1], batch)) 
+-            labels = torch.stack(labels)
+-            
+-        else:
+-            samples = float('NaN')
+-            labels = float('NaN')
+-            
+-        return samples, labels
+\ No newline at end of file"
+OK;13;fmathiou;Replay-SLDA;1d1898771f816f796a6c071f6592f21aa308fb72;Delete memory.py;\ No newline at end of file
+KO;26;appbox;shadowsocksr;9bb52acaf54f6e6ce32360474b286bddf7e4edbf;"Merge pull request #25 from mengskysama/patch-4
+
+memory leak";"def handle_periodic(self):
+                 logging.info('closed UDP port %d', self._listen_port)
+         before_sweep_size = len(self._sockets)
+         self._cache.sweep()
+         if before_sweep_size != len(self._sockets):
+             logging.debug('UDP port %5d sockets %d' % (self._listen_port, len(self._sockets)))
+         self._client_fd_to_server_addr.sweep()"
+OK;26;appbox;shadowsocksr;9bb52acaf54f6e6ce32360474b286bddf7e4edbf;"Merge pull request #25 from mengskysama/patch-4
+
+memory leak";"def handle_periodic(self):
+                 logging.info('closed UDP port %d', self._listen_port)
+         before_sweep_size = len(self._sockets)
+         self._cache.sweep()
++        self._dns_cache.sweep()
+         if before_sweep_size != len(self._sockets):
+             logging.debug('UDP port %5d sockets %d' % (self._listen_port, len(self._sockets)))
+         self._client_fd_to_server_addr.sweep()"
+KO;26;appbox;shadowsocksr;b059b9ad8562df90251419685edeada96ae6560c;memory leak;"def handle_periodic(self):
+                 logging.info('closed UDP port %d', self._listen_port)
+         before_sweep_size = len(self._sockets)
+         self._cache.sweep()
+         if before_sweep_size != len(self._sockets):
+             logging.debug('UDP port %5d sockets %d' % (self._listen_port, len(self._sockets)))
+         self._client_fd_to_server_addr.sweep()"
+OK;26;appbox;shadowsocksr;b059b9ad8562df90251419685edeada96ae6560c;memory leak;"def handle_periodic(self):
+                 logging.info('closed UDP port %d', self._listen_port)
+         before_sweep_size = len(self._sockets)
+         self._cache.sweep()
++        self._dns_cache.sweep()
+         if before_sweep_size != len(self._sockets):
+             logging.debug('UDP port %5d sockets %d' % (self._listen_port, len(self._sockets)))
+         self._client_fd_to_server_addr.sweep()"
+KO;27;WoLeo-Z;tgmsbot;7550e4fc4b33b1792b3c6951cb1b50d8a6f49457;free memory and fix BadRequest;"def dist_cards_btn_click(update, context):
+     data = update.callback_query.data
+     user = update.callback_query.from_user
+     omsg = update.callback_query.message
+     try:
+         (_, rphash) = data.split(' ')
+-        red_packets = context.chat_data.setdefault('red_packets', dict())
+         rp = red_packets.get(str(rphash), None)
+         if rp:
+             (cards, damount) = [int(a) for a in rp]
+@@ -268,7 +268,7 @@ def __floating(value):
+                 return randrange(5000,15000)/10000 * value
+             got_cards = int(__floating(cards/damount))
+             got_cards = got_cards if got_cards <= cards else cards
+-            got_cards = 1 if randrange(0,10000)/10000 < 0.2 and got_cards == 0 else got_cards
+             got_cards = got_cards if damount != 1 else cards
+             rp[0] -= got_cards
+             rp[1] -= 1
+@@ -289,4 +289,14 @@ def __floating(value):
+             update.callback_query.answer()
+         except Exception:
+             pass
+-        omsg.edit_text(omsg.text_markdown + ""褪裙了"", parse_mode=""Markdown"", reply_markup=None)"
+OK;27;WoLeo-Z;tgmsbot;7550e4fc4b33b1792b3c6951cb1b50d8a6f49457;free memory and fix BadRequest;"def dist_cards_btn_click(update, context):
+     data = update.callback_query.data
+     user = update.callback_query.from_user
+     omsg = update.callback_query.message
++    red_packets = context.chat_data.setdefault('red_packets', dict())
+     try:
+         (_, rphash) = data.split(' ')
+         rp = red_packets.get(str(rphash), None)
+         if rp:
+             (cards, damount) = [int(a) for a in rp]
+@@ -268,7 +268,7 @@ def __floating(value):
+                 return randrange(5000,15000)/10000 * value
+             got_cards = int(__floating(cards/damount))
+             got_cards = got_cards if got_cards <= cards else cards
++            got_cards = 1 if got_cards == 0 and randrange(0,10000)/10000 < 0.2 else got_cards
+             got_cards = got_cards if damount != 1 else cards
+             rp[0] -= got_cards
+             rp[1] -= 1
+@@ -289,4 +289,14 @@ def __floating(value):
+             update.callback_query.answer()
+         except Exception:
+             pass
++        def free_mem(job_context):
++            try:
++                red_packets.pop(rphash)
++            except KeyError:
++                pass
++        if rphash:
++            rp = red_packets.get(rphash, [0, 0])
++            if rp[0] != -1:
++                rp[0] = -1
++                omsg.edit_text(omsg.text_markdown + ""褪裙了"", parse_mode=""Markdown"", reply_markup=None)
++                context.job_queue.run_once(free_mem, 5)"
