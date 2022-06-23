@@ -71,6 +71,8 @@ def getFunctFromFile(currentPath):
     path = files[0]
     func = []
     val = ""
+    files_paths = []
+    it_paths = 0
     for r in files[0]:
         if os.listdir(r) != 0:
             path = r
@@ -81,18 +83,24 @@ def getFunctFromFile(currentPath):
                     filepath = path + f
                 if os.path.exists(filepath):
                     with open(filepath) as fil:
+                        it_paths = 0
                         strr = fil.readline()
                         while strr != "":
                             if "def" in strr:
-                                func.append(val)
+                                if it_paths != 0:
+                                    func.append(val)
                                 val = strr
+                                it_paths += 1
                             else:
                                 val += str(strr)
                             nextline = fil.readline()
                             strr = nextline
-                        func.append(val)
-    func.pop(0)
-    return func
+                        if it_paths != 0:
+                            # filepath.replace(r, "")
+                            func.append(val)
+                            files_paths.append((filepath, it_paths))
+    #func.pop(0)
+    return func, files_paths
 
 
 '''
@@ -100,7 +108,6 @@ Fonction to generate summarize from function
 @code : Array with extract code from file
 :return Array with code and summarize
 '''
-
 
 def createCodeAndSummarize(code):
     x = []
