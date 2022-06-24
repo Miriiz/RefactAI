@@ -1,7 +1,7 @@
 import time
 
 import requests
-import pandas as pd
+# import pandas as pd
 import csv
 from define import github_token
 from tqdm import tqdm
@@ -167,9 +167,10 @@ class GithubDataset:
             x_train.append(code)
         return x_train, y_train
 
+
 j = 0
-for i in range(0, 300, 10):
-    dataset = GithubDataset('python', 900, ['memory', 'error'], 45 + i, 35 + i)
+for i in range(0, 600, 10):
+    dataset = GithubDataset('python', 900, ['memory', 'error'], 100 + i, 90 + i)
     dataset.load_commits()
     dataset.save('output\\dataset_{j}.csv'.format(j=j))
     j += 1
