@@ -2,49 +2,56 @@ from GithubDataset import GithubDataset
 from Model import *
 import numpy as np
 import tensorflow as tf
-
 from tensorflow.keras import layers
+from matplotlib import pyplot as plt
 
-#Code Correction
-#0 Créer un énorme dataset sur numpy
-#1 Modeles
-
-#Rapport
-#rapport permettant d'identifier les bugs et de rajouter une ligne
-#Table des matières
-#Memory error
+encoder = layers.experimental.preprocessing.TextVectorization(output_mode='int', output_sequence_length=300,
+                                                              max_tokens=1000)
+test_percent = 5 / 100
 
 
-def custom_standardization(input_data):
-    return tf.strings.lower(input_data)
+def vectorize_text(text, label):
+    text = tf.expand_dims(text, -1)
+    label = tf.reshape(label, [int(tf.size(label)), 1])
+    return encoder(text), label
+
+
+def split_dataset(x):
+    test_size = int(len(x) * test_percent)
+    return x[test_size:len(x)], x[0:test_size]
+
+
+def prepare_dataset(x, y):
+    assert(len(x) == len(y))
+    dx = tf.data.Dataset.from_tensor_slices(np.array(x))
+    dy = tf.data.Dataset.from_tensor_slices(np.array(y))
+    dcomb = tf.data.Dataset.zip((dx, dy)).batch(len(x))
+    encoder.adapt(dcomb.map(lambda text, label: text))
+    return dcomb.map(vectorize_text)
+
+
+def save_plot_accuracy(log, filename, title="model accuracy"):
+    plt.plot(log.history['accuracy'])
+    plt.plot(log.history['val_accuracy'])
+    plt.title(title)
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'val'], loc='upper left')
+    plt.savefig(f'plots/{filename}.png')
 
 
 if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     dataset = GithubDataset('python', 900, 'memory', 5)
     x_train, y_train = dataset.load_from_file("output\\dataset_all.csv")
-    print(x_train[0])
+    x_train, x_test = split_dataset(x_train)
+    y_train, y_test = split_dataset(y_train)
 
-    model_linear = create_base_model(linear_mod)
-    '''
-    max_features = 10000
-    sequence_length = 250
-    vectorize_layer = layers.experimental.preprocessing.TextVectorization(
-        standardize=custom_standardization,
-        max_tokens=max_features,
-        output_mode='int',
-        output_sequence_length=sequence_length)
-    print(vectorize_layer(x_train[0]))
-    '''
-    VOCAB_SIZE = 1000
-    x = tf.data.Dataset.from_tensor_slices(np.array(x_train))
+    train = prepare_dataset(x_train, y_train)
+    test = prepare_dataset(x_test, y_test)
 
-    encoder = layers.experimental.preprocessing.TextVectorization(
-        max_tokens=VOCAB_SIZE)
-    encoder.adapt(x.map(lambda text, label: text))
-
-    train_model(model_linear, x_train, y_train)
-
-    #model_mlp = create_base_model(add_mlp_layers)
-
-
+    #model = create_base_model(linear_mod)
+    model = create_base_model(add_mlp_layers)
+    # forest = create_base_model(forest_mod)
+    logs = train_model(model, train, test)
+    save_plot_accuracy(logs, "mlp")

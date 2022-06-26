@@ -1,7 +1,7 @@
 import time
 
 import requests
-import pandas as pd
+# import pandas as pd
 import csv
 from define import github_token
 from tqdm import tqdm
@@ -158,16 +158,27 @@ class GithubDataset:
             for column, value in row.items():
                 result.setdefault(column, []).append(value)
         file.close()
+        indices_without_labels = []
+        it = 0
         for label in result['Label']:
             if label == 'OK':
                 y_train.append(1)
             elif label == 'KO':
                 y_train.append(0)
+            else:
+                indices_without_labels.append(it)
+            it += 1
+        it = 0
         for code in result['Code']:
-            x_train.append(code)
+            if it not in indices_without_labels:
+                x_train.append(code)
+            it += 1
         return x_train, y_train
 
 
+j = 0
+for i in range(0, 600, 10):
+    dataset = GithubDataset('python', 900, ['memory', 'error'], 100 + i, 90 + i)
 '''
 j = 0
 for i in range(0, 100, 10):

@@ -1,4 +1,5 @@
 import tensorflow as tf
+#import tensorflow_decision_forests as tfdf
 import os
 from tensorflow.keras import Model, Sequential
 from tensorflow.python.keras.layers import Flatten
@@ -6,18 +7,19 @@ from ModelParam import *
 
 train_size = 0
 val_size = 0
-class_w = 0
 
 
 def create_base_model(add_custom_layers_func) -> Model:
     m = Sequential()
     add_custom_layers_func(m)
     m.add(Flatten())
-    m.add(tf.keras.layers.Dense(2, tf.keras.activations.softmax))
+    m.add(tf.keras.layers.Dense(1, activation="sigmoid"))#tf.keras.activations.softmax))
 
     m.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=ref_lr / ref_batch_size * batch_size),
-              loss=tf.keras.losses.categorical_crossentropy,
-              metrics=["categorical_accuracy"])
+              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+              metrics=["accuracy"])
+    #m.build()
+    #m.summary()
 
     return m
 
@@ -39,6 +41,7 @@ def linear_mod(Seq):
 
 def forest_mod(model):
     model = tf.keras.RandomForestModel()
+    # tfdf et non tf
     return model
 
 
@@ -51,11 +54,12 @@ def add_mlp_layers(model):
 
 
 # Function to train model
-def train_model(m: Model, x_iterator, y_iterator):
+def train_model(m: Model, dataset, dataset_test):
     log = m.fit(
-        x_iterator,
-        validation_data=y_iterator,
+        dataset,
+        validation_data=dataset_test,
         epochs=epch,
+        batch_size=32,
         callbacks=[
             tf.keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=1, write_graph=True, write_images=True)
         ]
