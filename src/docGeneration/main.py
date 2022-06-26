@@ -7,7 +7,6 @@ if __name__ == '__main__':
     code, files_paths = getFunctFromFile(os.path.dirname(os.path.abspath(__file__)))
     codeArray = createCodeAndSummarize(code)
     function_index = 0
-
     pdf = PDF()
     pdf.alias_nb_pages()
     pdf.add_page()

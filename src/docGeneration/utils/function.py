@@ -22,6 +22,7 @@ def pythonTokenizer(line):
     for toktype, tok, start, end, line in tokenize.generate_tokens(line.readline):
         if not toktype == tokenize.COMMENT:
             if toktype == tokenize.STRING:
+                print("CODE_STRING", tok)
                 result.append("CODE_STRING")
             elif toktype == tokenize.NUMBER:
                 result.append("CODE_INTEGER")
@@ -99,7 +100,7 @@ def getFunctFromFile(currentPath):
                             # filepath.replace(r, "")
                             func.append(val)
                             files_paths.append((filepath, it_paths))
-    #func.pop(0)
+    # func.pop(0)
     return func, files_paths
 
 
@@ -109,11 +110,12 @@ Fonction to generate summarize from function
 :return Array with code and summarize
 '''
 
+
 def createCodeAndSummarize(code):
     x = []
     for c in code:
         tokenized_code = pythonTokenizer(c)
-        # print(tokenized_code)
+        print(tokenized_code)
         x.append((c, pipeline([tokenized_code])))
     return x
 

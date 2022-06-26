@@ -1,1 +1,5787 @@
 Label;Page;Username;Repo;Commit;Bug;Code
+KO;9;Tencent;BlazerML-tvm;2dad4d18f96c17cc4e035e1a9c80d8ac3476d47b;"[BugFix] Fix divide by zero error in TIR pass lower_warp_memory (#9485)
+
+* fix factor divide by zero
+
+* add a test case in test_tir_transform_lower_warp_memory.py
+
+* fix type
+
+* make it more elegant";"class WarpAccessRewriter : protected StmtExprMutator {
+     // Align the local memory size. The number of elements may not
+     // be a multiple of width_ * warp_coeff_; round it up.
+     int factor = width_ * warp_coeff_;
+     warp_group_ = (alloc_size + (factor - 1)) / factor;
+     alloc_size = warp_group_ * factor;
+ "
+OK;9;Tencent;BlazerML-tvm;2dad4d18f96c17cc4e035e1a9c80d8ac3476d47b;"[BugFix] Fix divide by zero error in TIR pass lower_warp_memory (#9485)
+
+* fix factor divide by zero
+
+* add a test case in test_tir_transform_lower_warp_memory.py
+
+* fix type
+
+* make it more elegant";"class WarpAccessRewriter : protected StmtExprMutator {
+     // Align the local memory size. The number of elements may not
+     // be a multiple of width_ * warp_coeff_; round it up.
+     int factor = width_ * warp_coeff_;
++    ICHECK_NE(factor, 0) << ""Divide by zero"";
+     warp_group_ = (alloc_size + (factor - 1)) / factor;
+     alloc_size = warp_group_ * factor;
+ "
+KO;9;Tencent;BlazerML-tvm;2dad4d18f96c17cc4e035e1a9c80d8ac3476d47b;"[BugFix] Fix divide by zero error in TIR pass lower_warp_memory (#9485)
+
+* fix factor divide by zero
+
+* add a test case in test_tir_transform_lower_warp_memory.py
+
+* fix type
+
+* make it more elegant";" 
+ import numpy as np
+ import tvm.testing
+ 
+ 
+ @tvm.testing.requires_cuda
+@@ -310,11 +311,28 @@ def test_lower_warp_memory_same_thread():
+     assert ""tvm_warp_shuffle"" not in fdevice.astext()
+ 
+ 
+ if __name__ == ""__main__"":
+-    test_lower_warp_memory_local_scope()
+-    test_lower_warp_memory_correct_indices()
+-    test_lower_warp_memory_cuda_end_to_end()
+-    test_lower_warp_memory_cuda_half_a_warp()
+-    test_lower_warp_memory_cuda_2_buffers()
+-    test_lower_warp_memory_roundup()
+-    test_lower_warp_memory_same_thread()"
+OK;9;Tencent;BlazerML-tvm;2dad4d18f96c17cc4e035e1a9c80d8ac3476d47b;"[BugFix] Fix divide by zero error in TIR pass lower_warp_memory (#9485)
+
+* fix factor divide by zero
+
+* add a test case in test_tir_transform_lower_warp_memory.py
+
+* fix type
+
+* make it more elegant";" 
+ import numpy as np
+ import tvm.testing
++import pytest
+ 
+ 
+ @tvm.testing.requires_cuda
+@@ -310,11 +311,28 @@ def test_lower_warp_memory_same_thread():
+     assert ""tvm_warp_shuffle"" not in fdevice.astext()
+ 
+ 
++@tvm.testing.requires_cuda
++def test_lower_warp_memory_divide_by_factor():
++    ib = tvm.tir.ir_builder.IRBuilder()
++    bx = te.thread_axis(""blockIdx.x"")
++    tx = te.thread_axis(""threadIdx.x"")
++
++    with ib.new_scope():
++        ib.scope_attr(bx, ""thread_extent"", 32)
++        ib.scope_attr(tx, ""thread_extent"", 32)
++        t = ib.allocate(""float32"", 16, name=""t"", scope=""warp"")
++        n = ib.allocate(""float32"", 16, name=""n"", scope=""local"")
++        n[0] = t[0]
++
++    stmt = ib.get()
++    func = tvm.tir.PrimFunc([], stmt)
++    func = func.with_attr(""from_legacy_te_schedule"", True)
++    cuda_target = tvm.target.Target(""cuda"")
++    mod = tvm.lower(func, name=""f"")
++    mod = tvm.tir.transform.Apply(lambda f: f.with_attr(""target"", cuda_target))(mod)
++    with pytest.raises(tvm.error.TVMError, match=""Divide by zero"") as cm:
++        tvm.tir.transform.LowerWarpMemory()(mod)[""f_kernel0""]
++
++
+ if __name__ == ""__main__"":
++    pytest.main([__file__])"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"-from sqlalchemy import Column, String, BigInteger, JSON
+ from sqlalchemy import create_engine
+ from sqlalchemy.orm import sessionmaker, declarative_base
+ 
+-
+ Base = declarative_base()
+ 
+ 
+ class PqlEntity(Base):
+     __tablename__ = ""entitys""
+     id = Column(String(36), primary_key=True, unique=True)
+     start = Column(BigInteger)
+     end = Column(BigInteger)
+     value = Column(JSON)
+ 
+     def __repr__(self):
+-        return ""<Entity(id='%s', start='%s', end='%s', value='%s')>"" % (
+             self.id,
+             self.start,
+             self.end,
+             self.value,
+         )
+ 
+ 
+-def connect_to_db():
+-    engine = create_engine(""sqlite:///sqlite.db"", echo=True)
+-    connection = engine.connect()
+-    return connection, engine
+ 
+ 
+-def get_session():
+-    connection, engine = connect_to_db()
+     Session = sessionmaker(bind=engine)
+-    session = Session()
+     return session, connection, engine
+ 
+ 
+ def migrate():
+-    session, connection, engine = get_session()
+     Base.metadata.create_all(engine)
+     session.close()
+ 
+ 
+ def fetch_data_from_query(sql_query: str):
+-    session, connection, engine = get_session()
+     with engine.connect().execution_options(autocommit=True) as conn:
+         fetched_data = conn.execute(sql_query)
+     session.close()
+     return fetched_data
+ 
+ 
+-def delete_all_rows():
+-    fetch_data_from_query(""delete  from entitys where TRUE;"")
+ 
+ 
+ def insert_entity(insert_entity: PqlEntity):
+-    session, connection, engine = get_session()
+-    session.add(insert_entity)
+-    session.commit()
+-    session.close()
+ 
+ 
+ def update_end_of_entity_with_id(id, end: int):
+-    session, connection, engine = get_session()
+     session.query(PqlEntity).filter(PqlEntity.id == id).update(
+         {PqlEntity.end: end}, synchronize_session=False
+     )
+     session.commit()
+     session.close()
+ 
+ 
+-def update_end_of_entity_and_in_json_with_id(id, end: int, updated_dict):
+-    session, connection, engine = get_session()
+     session.query(PqlEntity).filter(PqlEntity.id == id).update(
+-        {PqlEntity.end: end}, synchronize_session=False
+     )
+     session.query(PqlEntity).filter(PqlEntity.id == id).update(
+         {PqlEntity.value: updated_dict}, synchronize_session=False
+     )
+     session.commit()
+     session.close()
+ 
+ 
+ def get_all_entitys():
+-    session, connection, engine = get_session()
+-    list_enttiys: [PqlEntity] = session.query(PqlEntity).all()
+     session.close()
+-    return list_enttiys"
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"+from json import loads
++
++from sqlalchemy import Column, String, BigInteger, JSON, and_
+ from sqlalchemy import create_engine
++from sqlalchemy.engine import row, Engine, Connection
+ from sqlalchemy.orm import sessionmaker, declarative_base
+ 
+ Base = declarative_base()
+ 
+ 
+ class PqlEntity(Base):
+     __tablename__ = ""entitys""
+     id = Column(String(36), primary_key=True, unique=True)
++    name = Column(String(256))
+     start = Column(BigInteger)
+     end = Column(BigInteger)
+     value = Column(JSON)
+ 
+     def __repr__(self):
++        return ""<Entity(id='%s', name='%s', start='%s', end='%s', value='%s')>"" % (
+             self.id,
++            self.name,
+             self.start,
+             self.end,
+             self.value,
+         )
+ 
+ 
++class ExtractCounter(Base):
++    __tablename__ = ""extract_counter""
++    name = Column(String(36), primary_key=True, unique=True)
++    counter_value = Column(BigInteger)
++
++
++def select_counter_from_name(name: str):
++    sql_str: str = f""SELECT counter_value FROM extract_counter WHERE name ='{name}';""
++    session, connection, engine = connect_to_db()
++    result = session.execute(sql_str)
++    names: [dict] = [row[0] for row in result]
++    # if nix drin dann leeres array names: [dict] = [row[0] for row in result]
++    return names
+ 
+ 
++def update_counter_by_name(name: str, counter: int):
++    from sqlalchemy import update
++
++    upd = update(ExtractCounter)
++    val = upd.values({""counter_value"": counter})
++    cond = val.where(ExtractCounter.name == name)
++
++    session, connection, engine = connect_to_db()
++    engine.execute(cond)
++    session.commit()
++    session.close()
++    connection.close()
++
++
++def insert_save_extract(entity: ExtractCounter):
++    session, connection, engine = connect_to_db()
++    try:
++        session.add(entity)
++        session.commit()
++        session.close()
++        connection.close()
++    except KeyboardInterrupt:
++        session.close()
++        connection.close()
++
++
++def connect_to_db():
++    engine: Engine = create_engine(""sqlite:///sqlite.db"", echo=False)
++    connection: Connection = engine.connect()
+     Session = sessionmaker(bind=engine)
++    session: Session = Session()
+     return session, connection, engine
+ 
+ 
+ def migrate():
++    session, connection, engine = connect_to_db()
+     Base.metadata.create_all(engine)
+     session.close()
++    connection.close()
+ 
+ 
+ def fetch_data_from_query(sql_query: str):
++    session, connection, engine = connect_to_db()
+     with engine.connect().execution_options(autocommit=True) as conn:
+         fetched_data = conn.execute(sql_query)
+     session.close()
+     return fetched_data
+ 
+ 
++def delete_all_rows_from_pql_entity():
++    fetch_data_from_query(""DELETE FROM entitys WHERE TRUE;"")
++    # delete_all_rows_from_counter_saving()
++
++
++def delete_all_rows_from_counter_saving():
++    fetch_data_from_query(""DELETE FROM extract_counter WHERE TRUE;"")
+ 
+ 
+ def insert_entity(insert_entity: PqlEntity):
++    session, connection, engine = connect_to_db()
++    try:
++        session.add(insert_entity)
++        session.commit()
++        session.close()
++        connection.close()
++    except KeyboardInterrupt:
++        session.close()
++        connection.close()
+ 
+ 
+ def update_end_of_entity_with_id(id, end: int):
++    session, connection, engine = connect_to_db()
+     session.query(PqlEntity).filter(PqlEntity.id == id).update(
+         {PqlEntity.end: end}, synchronize_session=False
+     )
+     session.commit()
+     session.close()
++    connection.close()
+ 
+ 
++def update_end_of_entity_and_in_json_with_id(id: str, updated_dict: dict):
++    session, connection, engine = connect_to_db()
+     session.query(PqlEntity).filter(PqlEntity.id == id).update(
++        {PqlEntity.end: updated_dict.get(""end"")}, synchronize_session=False
+     )
+     session.query(PqlEntity).filter(PqlEntity.id == id).update(
+         {PqlEntity.value: updated_dict}, synchronize_session=False
+     )
+     session.commit()
+     session.close()
++    connection.close()
++
++
++def get_entity_with_name(name: str):
++    session, connection, engine = connect_to_db()
++    list_entitys: [PqlEntity] = session.query(PqlEntity).filter_by(name=name).all()
++    session.close()
++    connection.close()
++    return list_entitys
++
++
++def get_entity_with_name_and_predicate(value_filter: dict):
++    ### property geht nicht. es muss ein value sein. hier dann switchcase oder so
++    session, connection, engine = connect_to_db()
++    list_entitys: [row] = (
++        session.query(PqlEntity.value).filter_by(and_(value_filter)).all()
++    )
++    session.close()
++    connection.close()
++    return list_entitys
+ 
+ 
+ def get_all_entitys():
++    session, connection, engine = connect_to_db()
++    list_entitys: [PqlEntity] = session.query(PqlEntity).all()
++    session.close()
++    connection.close()
++    return list_entitys
++
++
++def get_all_names():
++    session, connection, engine = connect_to_db()
++    list_entitys: [row] = session.query(PqlEntity.name).distinct().all()
++    session.close()
++    connection.close()
++    return list_entitys
++
++
++def get_values_from_name(name: str):
++    session, connection, engine = connect_to_db()
++    list_entitys: [row] = session.query(PqlEntity.value).filter_by(name=name).all()
++    session.close()
++    connection.close()
++    return list_entitys
++
++
++def get_values_from_all_entitys_as_dict(name: str):
++    dict_array: [dict] = []
++    el: row
++    for el in get_values_from_name(name):
++        dict_array.append(el._mapping.get(""value""))
++    return dict_array
++
++
++def execute_raw_sql_query(name: str, value_json, groupBy: str):
++    session, connection, engine = connect_to_db()
++    # result = session.execute(f""SELECT value FROM entitys WHERE name = '{name}' AND {value}"")
++    # result=session.execute(f""SELECT * FROM entitys WHERE name = 'Cycle' AND json_extract(value, '$.start') = 0 {groupBy}"")
++    result = session.execute(
++        f""SELECT json_extract(value, '$')  FROM entitys WHERE entitys.name ='{name}' AND {value_json} {groupBy}""
++    )
++    # session.query(PqlEntity.value).filter(PqlEntity.value['start'] == '129', name == 'Cycle').all()
++    # session.query(PqlEntity.value).filter(and_(PqlEntity.name == ""Cycle"", PqlEntity.start == 129)).all()
++    # session.query(PqlEntity.value).filter(and_(PqlEntity.name == ""Cycle"", PqlEntity.value[""start""] == ""993"")).all()
++    # ({'id': 114, 'uuid': '404e8909-1d5e-45d0-b0a8-734387bb1956', 'start': 993, 'end': 999, 'material_equipped': 11},)
++    # session.query(PqlEntity).filter_by(PqlEntity.name == ""Cycle"", PqlEntity.value['id'] == ""5"").all()
++    names: [dict] = [loads(row[0]) for row in result]
+     session.close()
++    connection.close()
++    return names"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" import random
+ from typing import Any
+ 
+ from faker import Faker
+@@ -7,6 +8,11 @@
+     migrate,
+     insert_entity,
+     PqlEntity,
+ )
+ 
+ faker1: Faker = Faker()
+@@ -55,6 +61,9 @@ def reset(self):
+     def reset_all(self):
+         self.counter = 0
+ 
+     def __str__(self) -> str:
+         return f""AutoGenerated({self.counter + 1})""
+ 
+@@ -70,15 +79,14 @@ def is_foreignkey(self) -> bool:
+         return False
+ 
+     def apply(self, current_state: dict):
+-        self.uuid = str(faker1.uuid4())
+-        # self.uuid = str(uuid.uuid4())
+         return self.uuid
+ 
+     def reset(self):
+-        self.uuid = 0
+ 
+     def reset_all(self):
+-        self.uuid = 0
+ 
+     def __str__(self) -> str:
+         return f""AutoGenerated({self.uuid})""
+@@ -200,13 +208,13 @@ def apply(self, parent_entity: str, key, end_result: dict):
+         }
+         if contstraint_entry in self.constraints:
+             raise RuntimeError(f""The following: {contstraint_entry} is duplicated"")
+-            return
+         for element in self.constraints:
+             if parent_entity_id in element.values():
+                 raise RuntimeError(
+                     f""The following ID: {parent_entity_id} from {parent_entity} is duplicated!""
+                 )
+-                return
+         self.constraints.append(contstraint_entry)
+         return_dict: dict = {f""{key}"": foreignkey_id}
+         return return_dict
+@@ -312,6 +320,8 @@ class SyncDatabase:
+     def __init__(self, end_result) -> None:
+         super().__init__()
+         self.end_result = end_result
+ 
+     def synchronize_database(self):
+         migrate()
+@@ -321,27 +331,93 @@ def synchronize_database(self):
+                 insert_entity(
+                     PqlEntity(
+                         id=en.get(""uuid""),
+                         start=en.get(""start""),
+                         end=en.get(""end""),
+                         value=en,
+                     )
+                 )
+ 
+ 
+ class StateProcessor(object):
+     def __init__(self, config) -> None:
+         super().__init__()
+         self.config = config
+         self.context = {}
+         self.end_result = {}
+         self.init_ids_in_foreignkeys()
+ 
+     def __exctract_all_items__(self, entity, state):
+-        all_items: dict = {
+-            k: v.apply(state)
+-            for k, v in self.config.get(entity).get(""fields"").items()
+-            if not v.is_foreignkey()
+-        }
+         all_items.update(
+             {""start"": state.get(""timestamp""), ""end"": state.get(""timestamp"")}
+         )
+@@ -395,12 +471,26 @@ def init_context(self, first_element_of_stream):
+         The dict gets its Entitys here and get empty Arrays for appending each entry in the array later
+         The first Element of the Stream will be append here, so we check if the acctual element is diffrent form this init  one""""""
+         self.changed = set()
+         for entity in self.config.keys():
+-            x = {
+-                k: v.apply(first_element_of_stream)
+-                for k, v in self.config.get(entity).get(""fields"").items()
+-                if not v.is_foreignkey()
+-            }
+             x.update(
+                 {
+                     ""start"": first_element_of_stream.get(""timestamp""),
+@@ -434,6 +524,7 @@ def process_state(self, state):
+             self.context[entity] = current_context
+ 
+         self.process_foreingkeys()
+ 
+     def process_foreingkeys(self):
+         """"""First loop is for all Entitys which changed
+@@ -442,7 +533,7 @@ def process_foreingkeys(self):
+         After that the check is if this Entity is the same which has the foreinkey in the Config file
+         If so it is applyed
+         If not the other Entity has to be the Entity which has the Foreignky so it apllys
+-        If BothcChange the Entity it self or the Related Entity one em will be removed so per change the apply method will be call one time""""""
+         removed = set()
+         for element in self.changed:
+             if not element in removed:
+@@ -476,6 +567,12 @@ def process_foreingkeys(self):
+     def get_result(self):
+         return self.end_result
+ 
+ 
+ if __name__ == ""__main__"":
+     """"""
+@@ -596,7 +693,7 @@ def get_config() -> dict:
+         }
+ 
+     # print(states)
+-    processor = StateProcessor(get_config())
+     processor.init_context(states[0])
+     for state in states:
+         processor.process_state(state)
+@@ -622,7 +719,7 @@ def get_config() -> dict:
+     #     print(f""Entity: {entity}"")
+     #     print(f""Result Dict 2: {result_dict_2}"")
+ 
+-    db_sync = SyncDatabase(end_result)
+     db_sync.synchronize_database()
+ 
+     result = {"
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" import random
++import uuid
+ from typing import Any
+ 
+ from faker import Faker
+@@ -7,6 +8,11 @@
+     migrate,
+     insert_entity,
+     PqlEntity,
++    update_end_of_entity_and_in_json_with_id,
++    select_counter_from_name,
++    update_counter_by_name,
++    insert_save_extract,
++    ExtractCounter,
+ )
+ 
+ faker1: Faker = Faker()
+@@ -55,6 +61,9 @@ def reset(self):
+     def reset_all(self):
+         self.counter = 0
+ 
++    def set_counter(self, counter: int):
++        self.counter = counter
++
+     def __str__(self) -> str:
+         return f""AutoGenerated({self.counter + 1})""
+ 
+@@ -70,15 +79,14 @@ def is_foreignkey(self) -> bool:
+         return False
+ 
+     def apply(self, current_state: dict):
++        self.uuid = str(uuid.uuid4())
+         return self.uuid
+ 
+     def reset(self):
++        self.uuid = """"
+ 
+     def reset_all(self):
++        self.uuid = """"
+ 
+     def __str__(self) -> str:
+         return f""AutoGenerated({self.uuid})""
+@@ -200,13 +208,13 @@ def apply(self, parent_entity: str, key, end_result: dict):
+         }
+         if contstraint_entry in self.constraints:
+             raise RuntimeError(f""The following: {contstraint_entry} is duplicated"")
++
+         for element in self.constraints:
+             if parent_entity_id in element.values():
+                 raise RuntimeError(
+                     f""The following ID: {parent_entity_id} from {parent_entity} is duplicated!""
+                 )
++
+         self.constraints.append(contstraint_entry)
+         return_dict: dict = {f""{key}"": foreignkey_id}
+         return return_dict
+@@ -312,6 +320,8 @@ class SyncDatabase:
+     def __init__(self, end_result) -> None:
+         super().__init__()
+         self.end_result = end_result
++        self.current_state = end_result
++        self.sync_index = {}
+ 
+     def synchronize_database(self):
+         migrate()
+@@ -321,27 +331,93 @@ def synchronize_database(self):
+                 insert_entity(
+                     PqlEntity(
+                         id=en.get(""uuid""),
++                        name=el,
+                         start=en.get(""start""),
+                         end=en.get(""end""),
+                         value=en,
+                     )
+                 )
+ 
++    def sync_database_with_index(self):
++        migrate()
++        en: dict
++        self.init_sync_index()
++        for el in self.end_result:
++            dict_element_new: dict = self.end_result.get(el)[-1]
++            # neues element dazu gekommen
++            if self.sync_index[el] != dict_element_new.get(""uuid""):
++                insert_entity(
++                    PqlEntity(
++                        id=dict_element_new.get(""uuid""),
++                        name=el,
++                        start=dict_element_new.get(""start""),
++                        end=dict_element_new.get(""end""),
++                        value=dict_element_new,
++                    )
++                )
++                if len(self.end_result.get(el)) >= 2:
++                    dict_element_old = self.end_result.get(el)[-2]
++                    if self.sync_index[el] == dict_element_old.get(""uuid""):
++                        update_end_of_entity_and_in_json_with_id(
++                            dict_element_old.get(""uuid""), dict_element_old
++                        )
++                        self.sync_index[el] = dict_element_new.get(""uuid"")
++                else:
++                    self.sync_index[el] = dict_element_new.get(""uuid"")
++                # kein neues element nur das alte updaten.
++            else:
++                update_end_of_entity_and_in_json_with_id(
++                    dict_element_new.get(""uuid""), dict_element_new
++                )
++
++    def init_sync_index(self):
++        if self.end_result:
++            if not self.sync_index:
++                for el in self.end_result:
++                    self.sync_index[el] = """"
++
++    def insert_last_dicts_from_each_entity(self):
++        for el in self.end_result:
++            new_element: dict = self.end_result.get(el)[-1]
++            if new_element.get(""uuid"") != self.current_state.get(el)[-1].get(""uuid""):
++                insert_entity(
++                    PqlEntity(
++                        id=new_element.get(""uuid""),
++                        name=el,
++                        start=new_element.get(""start""),
++                        end=new_element.get(""end""),
++                        value=new_element,
++                    )
++                )
++                self.current_state[el] = new_element
++
++    def set_end_result(self, end_result):
++        self.end_result = end_result
++
++    def append_end_result(self, end_result):
++        self.end_result.append(end_result)
++
+ 
+ class StateProcessor(object):
+     def __init__(self, config) -> None:
+         super().__init__()
++        migrate()
+         self.config = config
+         self.context = {}
+         self.end_result = {}
+         self.init_ids_in_foreignkeys()
+ 
+     def __exctract_all_items__(self, entity, state):
++        all_items: dict = {}
++        counter: int = 0
++        for k, v in self.config.get(entity).get(""fields"").items():
++            if not v.is_foreignkey():
++                if type(v) is AutoGeneratedField:
++                    counter = v.apply(state)
++                    update_counter_by_name(entity, counter)
++                    all_items.update({k: counter})
++                else:
++                    all_items.update({k: v.apply(state)})
+         all_items.update(
+             {""start"": state.get(""timestamp""), ""end"": state.get(""timestamp"")}
+         )
+@@ -395,12 +471,26 @@ def init_context(self, first_element_of_stream):
+         The dict gets its Entitys here and get empty Arrays for appending each entry in the array later
+         The first Element of the Stream will be append here, so we check if the acctual element is diffrent form this init  one""""""
+         self.changed = set()
++        counter: int = 0
+         for entity in self.config.keys():
++            x: dict = {}
++            for k, v in self.config.get(entity).get(""fields"").items():
++                if not v.is_foreignkey():
++                    if type(v) is AutoGeneratedField:
++                        saved_counter = select_counter_from_name(entity)
++                        if saved_counter:
++                            v.set_counter(saved_counter[0])
++                            counter = v.apply(first_element_of_stream)
++                            update_counter_by_name(entity, counter)
++                            x.update({k: counter})
++                        else:
++                            counter = v.apply(first_element_of_stream)
++                            insert_save_extract(
++                                ExtractCounter(name=entity, counter_value=counter)
++                            )
++                            x.update({k: counter})
++                    else:
++                        x.update({k: v.apply(first_element_of_stream)})
+             x.update(
+                 {
+                     ""start"": first_element_of_stream.get(""timestamp""),
+@@ -434,6 +524,7 @@ def process_state(self, state):
+             self.context[entity] = current_context
+ 
+         self.process_foreingkeys()
++        return self.end_result
+ 
+     def process_foreingkeys(self):
+         """"""First loop is for all Entitys which changed
+@@ -442,7 +533,7 @@ def process_foreingkeys(self):
+         After that the check is if this Entity is the same which has the foreinkey in the Config file
+         If so it is applyed
+         If not the other Entity has to be the Entity which has the Foreignky so it apllys
++        # If BothcChange the Entity it self or the Related Entity one em will be removed so per change the apply method will be call one time""""""
+         removed = set()
+         for element in self.changed:
+             if not element in removed:
+@@ -476,6 +567,12 @@ def process_foreingkeys(self):
+     def get_result(self):
+         return self.end_result
+ 
++    def get_last_result(self):
++        last_values: dict = {}
++        for el in self.end_result:
++            last_values.update({el: self.end_result.get(el)[-1]})
++        return last_values
++
+ 
+ if __name__ == ""__main__"":
+     """"""
+@@ -596,7 +693,7 @@ def get_config() -> dict:
+         }
+ 
+     # print(states)
++    processor: StateProcessor = StateProcessor(get_config())
+     processor.init_context(states[0])
+     for state in states:
+         processor.process_state(state)
+@@ -622,7 +719,7 @@ def get_config() -> dict:
+     #     print(f""Entity: {entity}"")
+     #     print(f""Result Dict 2: {result_dict_2}"")
+ 
++    db_sync: SyncDatabase = SyncDatabase(end_result)
+     db_sync.synchronize_database()
+ 
+     result = {"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" import uuid
+ from datetime import datetime, timedelta
+ from random import uniform
+-from typing import Iterable, List, Dict
+-
+ from pql import (
+     Query,
+     Projection,
+@@ -28,15 +42,22 @@ def create_cycles(n):
+     for i in range(0, n):
+         cycle_duration: timedelta = timedelta(seconds=uniform(20.0, 30.0))
+         pause: timedelta = timedelta(seconds=uniform(1.0, 60.0))
+-        cycles.append(
+-            {
+-                ""id"": i,
+-                ""start"": timestamp,
+-                ""end"": timestamp + cycle_duration,
+-                ""machine"": ""LHL 01"",
+-            }
+         )
+-
+         timestamp = timestamp + cycle_duration + pause
+ 
+     return cycles
+@@ -49,16 +70,23 @@ def create_tools(n):
+     for i in range(0, n):
+         duration: timedelta = timedelta(minutes=uniform(20.0, 40.0))
+         pause: timedelta = timedelta(minutes=uniform(5.0, 15.0))
+-        tools.append(
+-            {
+-                ""id"": uuid.uuid4(),
+-                ""name"": f""Tool {i}"",
+-                ""start"": timestamp,
+-                ""end"": timestamp + duration,
+-                ""machine"": ""LHL 01"",
+-            }
+         )
+-
+         timestamp = timestamp + duration + pause
+ 
+     return tools
+@@ -71,47 +99,74 @@ def create_materials(n):
+     for i in range(0, n):
+         duration: timedelta = timedelta(minutes=uniform(10.0, 20.0))
+         pause: timedelta = timedelta(minutes=uniform(0.0, 5.0))
+-        materials.append(
+-            {
+-                ""id"": uuid.uuid4(),
+-                ""material"": f""Material {i % 2}"",
+-                ""start"": timestamp,
+-                ""end"": timestamp + duration,
+-                ""machine"": ""LHL 01"",
+-            }
+         )
+-
+         timestamp = timestamp + duration + pause
+ 
+     return materials
+ 
+ 
+ def print_index_of_array(array: []):
+     element: dict
+     for element in array:
+         print(element)
+ 
+ 
+-generated_tools = create_tools(5)
+-generated_cycles = create_cycles(100)
+-generated_materials = create_materials(10)
+ 
+-
+-# print_index_of_array(generated_tools)
+-# print_index_of_array(generated_cycles)
+-# print_index_of_array(generated_materials)
+ 
+ 
+ def get_all_assets(name: str) -> Iterable[dict]:
+-    if name == ""Tools"":
+-        return generated_tools
+-    elif name == ""Cycles"":
+-        return generated_cycles
+-    elif name == ""Materials"":
+-        return generated_materials
+-    else:
+         raise Exception("""")
+-    # Root Context is what defines the boundaries and where to read the entities from
+ 
+ 
+ class InMemoryAssetRetriever:
+@@ -138,25 +193,120 @@ def get_group_for_object(o):
+         return assets
+ 
+ 
+ if __name__ == ""__main__"":
+     # SELECT t.name, COUNT(SELECT c FROM Cycles [WHERE t.start <= c.start AND c.start < t.end]),
+     # LIST(SELECT m.material FROM Materials [WHERE t.start <= m.start AND m.start < t.end])
+     # FROM Tools
+-    asset_retriever: InMemoryAssetRetriever = InMemoryAssetRetriever()
+-    # context = RootContext(asset_retriever.get_assets, lambda s: agg_functions.get(s))
+ 
+     context: RootContext = RootContext(
+-        asset_retriever.get_assets, lambda s: agg_functions.get(s)
+     )
+     # Concrete Example:
+-    # SELECT t.name, COUNT(SELECT c FROM Cycles) AS ""cycles"" FROM Tools
+-    print(context)
+     query: Query = Query(
+         [
+             Projection(""id""),
+-            Aggregation(""count"", Query([Projection(""id"")], ""Cycles""), name=""cycles""),
+         ],
+-        ""Tools"",
+     )
+     results: List[Dict] = query.execute(context)
+ 
+@@ -168,11 +318,13 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+             Projection(""id""),
+-            Aggregation(""count"", Query([Projection(""id"")], ""Cycles""), name=""cycles""),
+         ],
+-        ""Tools"",
+-        EqPredicate(""name"", ""Tool 0""),
+     )
+     results: List[Dict] = query.execute(context)
+     print(results)
+@@ -183,27 +335,29 @@ def get_group_for_object(o):
+     # FROM Tools AS t
+     query: Query = Query(
+         [
+-            Projection(""name""),
+-            Aggregation(""count"", Query([Projection(""id"")], ""Cycles""), name=""cycles""),
+             Aggregation(
+-                ""flatten"", Query([Projection(""material"")], ""Materials""), name=""products""
+             ),
+             SubQuery(
+                 Query(
+                     [
+-                        Projection(""material""),
+                         Aggregation(
+-                            ""count"", Query([Projection(""id"")], ""Cycles""), name=""cycles""
+                         ),
+                     ],
+-                    ""Materials"",
+                 ),
+                 name=""material_and_count"",
+             ),
+         ],
+-        ""Tools"",
+     )
+-
+     results: List[Dict] = query.execute(context)
+ 
+     # The result is a list of dicts representing a (probably nested) table
+@@ -214,143 +368,121 @@ def get_group_for_object(o):
+     # FROM Materials
+     query: Query = Query(
+         [
+-            Projection(""material""),
+-            Aggregation(""count"", Query([Projection(""id"")], ""Cycles""), name=""cycles""),
+         ],
+-        ""Materials"",
+-        group_by_clause=[Projection(""material"")],
+     )
+-
+     results: List[Dict] = query.execute(context)
+ 
+     # The result is a list of dicts representing a (probably nested) table
+     print(results)
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""material""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Materials"",
+     )
+     results_all_materials: List[Dict] = query.execute(context)
+ 
+     assert results_all_materials == generated_materials
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""name""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Tools"",
+     )
+     results_all_tools: List[Dict] = query.execute(context)
+ 
+     assert results_all_tools == generated_tools
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Cycles"",
+     )
+     results_all_cycles: List[Dict] = query.execute(context)
+ 
+     assert results_all_cycles == generated_cycles
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Cycles"",
+-        EqPredicate(""id"", generated_cycles[0].get(""id"")),
+     )
+     results_eq_cycles: List[Dict] = query.execute(context)
+ 
+     assert results_eq_cycles[0] == generated_cycles[0]
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Cycles"",
+-        LowerPredicate(""id"", 5),
+     )
+     results_lower_cycle: List[Dict] = query.execute(context)
+ 
+-    first_four = generated_cycles[0:5]
+     assert results_lower_cycle == first_four
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Cycles"",
+-        LowerEqPredicate(""id"", 5),
+     )
+     results_lower_eq_cycles: List[Dict] = query.execute(context)
+ 
+-    first_five = generated_cycles[0:6]
+     assert results_lower_eq_cycles == first_five
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Cycles"",
+-        GreaterPredicate(""id"", 5),
+     )
+     results_greater_cycles: List[Dict] = query.execute(context)
+ 
+-    first_four = generated_cycles[6:]
+     assert results_greater_cycles == first_four
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Cycles"",
+-        GreaterEqPredicate(""id"", 5),
+     )
+     results_greater_eq_cycles: List[Dict] = query.execute(context)
+ 
+-    first_five = generated_cycles[5:]
+     assert results_greater_eq_cycles == first_five
+ 
+     # Materials
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""material""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Materials"",
+         EqPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -360,13 +492,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""material""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Materials"",
+         LowerPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -378,13 +506,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""material""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Materials"",
+         LowerEqPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -398,13 +522,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""material""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Materials"",
+         GreaterPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -416,13 +536,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""material""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Materials"",
+         GreaterEqPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -437,13 +553,9 @@ def get_group_for_object(o):
+     # Tools
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""name""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Tools"",
+         EqPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),
+@@ -454,13 +566,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""name""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Tools"",
+         LowerPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),
+@@ -472,13 +580,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""name""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Tools"",
+         LowerEqPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),
+@@ -490,13 +594,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""name""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Tools"",
+         GreaterPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),
+@@ -508,13 +608,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
+-            Projection(""id""),
+-            Projection(""name""),
+-            Projection(""start""),
+-            Projection(""end""),
+-            Projection(""machine""),
+         ],
+-        ""Tools"",
+         GreaterEqPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),"
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" import uuid
+ from datetime import datetime, timedelta
+ from random import uniform
++from typing import Iterable, List, Dict, Union, Callable
++
++from sqlalchemy.engine import row
++
++from database_methods import (
++    PqlEntity,
++    get_entity_with_name,
++    get_all_names,
++    get_values_from_all_entitys_as_dict,
++    execute_raw_sql_query,
++    get_entity_with_name_and_predicate,
++    migrate,
++    insert_entity,
++    delete_all_rows_from_pql_entity,
++    delete_all_rows_from_counter_saving,
++)
+ from pql import (
+     Query,
+     Projection,
+@@ -28,15 +42,22 @@ def create_cycles(n):
+     for i in range(0, n):
+         cycle_duration: timedelta = timedelta(seconds=uniform(20.0, 30.0))
+         pause: timedelta = timedelta(seconds=uniform(1.0, 60.0))
++        element_dict: dict = {
++            ""id"": i,
++            ""start"": f""{timestamp}"",
++            ""end"": f""{timestamp + cycle_duration}"",
++            ""machine"": ""LHL 01"",
++        }
++        cycles.append(element_dict)
++        insert_entity(
++            PqlEntity(
++                id=element_dict.get(""id""),
++                name=""Cycle"",
++                start=element_dict.get(""start""),
++                end=element_dict.get(""end""),
++                value=element_dict,
++            )
+         )
+         timestamp = timestamp + cycle_duration + pause
+ 
+     return cycles
+@@ -49,16 +70,23 @@ def create_tools(n):
+     for i in range(0, n):
+         duration: timedelta = timedelta(minutes=uniform(20.0, 40.0))
+         pause: timedelta = timedelta(minutes=uniform(5.0, 15.0))
++        element_dict: dict = {
++            ""id"": str(uuid.uuid4()),
++            ""tool_name"": f""Tool {i}"",
++            ""start"": f""{timestamp}"",
++            ""end"": f""{timestamp + duration}"",
++            ""machine"": ""LHL 01"",
++        }
++        tools.append(element_dict)
++        insert_entity(
++            PqlEntity(
++                id=element_dict.get(""id""),
++                name=""ToolEquipped"",
++                start=element_dict.get(""start""),
++                end=element_dict.get(""end""),
++                value=element_dict,
++            )
+         )
+         timestamp = timestamp + duration + pause
+ 
+     return tools
+@@ -71,47 +99,74 @@ def create_materials(n):
+     for i in range(0, n):
+         duration: timedelta = timedelta(minutes=uniform(10.0, 20.0))
+         pause: timedelta = timedelta(minutes=uniform(0.0, 5.0))
++        element_dict: dict = {
++            ""id"": str(uuid.uuid4()),
++            ""material_name"": f""Material {i % 2}"",
++            ""start"": f""{timestamp}"",
++            ""end"": f""{timestamp + duration}"",
++            ""machine"": ""LHL 01"",
++        }
++        materials.append(element_dict)
++        insert_entity(
++            PqlEntity(
++                id=element_dict.get(""id""),
++                name=""MaterialEquipped"",
++                start=element_dict.get(""start""),
++                end=element_dict.get(""end""),
++                value=element_dict,
++            )
+         )
+         timestamp = timestamp + duration + pause
+ 
+     return materials
+ 
+ 
++def get_distinct_names_from_db():
++    all_names = get_all_names()
++    el: row
++    names: [str] = []
++    for el in all_names:
++        names.append(el._mapping.get(""name""))
++    return names
++
++
++def get_sorted_entitys():
++    all_names: [str] = get_distinct_names_from_db()
++    end_dict: dict = {}
++    for el in all_names:
++        mid_array = []
++        entity: PqlEntity
++        for entity in get_entity_with_name(el):
++            mid_array.append(entity.value)
++        end_dict.update({el: mid_array})
++    return end_dict
++
++
+ def print_index_of_array(array: []):
+     element: dict
+     for element in array:
+         print(element)
+ 
+ 
++migrate()
++delete_all_rows_from_pql_entity()
++delete_all_rows_from_counter_saving()
++create_tools(5)
++create_cycles(100)
++create_materials(10)
+ 
++all_assets = get_sorted_entitys()
++generated_tools = all_assets.get(""ToolEquipped"")
++generated_cycles = all_assets.get(""Cycle"")
++generated_materials = all_assets.get(""MaterialEquipped"")
+ 
+ 
+ def get_all_assets(name: str) -> Iterable[dict]:
++    try:
++        return all_assets.get(name)
++    except Exception as ex:
++        print(ex)
+         raise Exception("""")
+ 
+ 
+ class InMemoryAssetRetriever:
+@@ -138,25 +193,120 @@ def get_group_for_object(o):
+         return assets
+ 
+ 
++class DbMemoryAssetRetriever:
++    def get_assest(
++        self, asset_type, where_clause: Union[Predicate, Callable], group_by_clause
++    ):
++        assets = get_values_from_all_entitys_as_dict(asset_type)
++        group_by_sql: str = """"
++        if group_by_clause:
++            print(group_by_clause)
++            group_by_sql = ""GROUP BY ""
++            for el in group_by_clause:
++                group_by_sql += el.field
++        if where_clause:
++            if isinstance(where_clause, Predicate):
++                where_clause_type = type(where_clause)
++                assets = execute_raw_sql_query(
++                    asset_type,
++                    self.wrap_pql_predicate_to_sqll(
++                        where_clause_type,
++                        where_clause.property,
++                        where_clause.value,
++                        asset_type,
++                    ),
++                    group_by_sql,
++                )
++                # for later usage if where_clause is an list of Where clauses.
++                # where_clauses = [element for element in where_clause self.wrap_pql_predicate_to_sql(type(element))]
++                # assets = [element for element in assets if where_clause.check(element)]
++            else:
++                assets = [o for o in assets if where_clause(o)]
++        return assets
++
++    def wrap_name_to_pql_attribute(self, property: str):
++        if property == ""id"":
++            return PqlEntity.id
++        elif property == ""name"":
++            return PqlEntity.name
++        elif property == ""start"":
++            return PqlEntity.start
++        elif property == ""end"":
++            return PqlEntity.end
++        elif property == ""value"":
++            return PqlEntity.value
++        else:
++            return PqlEntity
++
++    def wrap_pql_predicate_to_sql(self, test, property, value, name):
++        property_sql = self.wrap_name_to_pql_attribute(property)
++        if test == EqPredicate:
++            return ""PqlEntity.name == name,property_sql == value""
++        elif test == GreaterPredicate:
++            return ""PqlEntity.name == name,property_sql > value""
++        elif test == GreaterEqPredicate:
++            return ""PqlEntity.name == name ,property_sql >= value""
++        elif test == LowerPredicate:
++            return ""PqlEntity.name == name, property_sql < value""
++        elif test == LowerEqPredicate:
++            return ""PqlEntity.name==name, property_sql <= value""
++        else:
++            return """"
++
++    def wrap_pql_predicate_to_sqll(self, test, property: str, value, name):
++        if test == EqPredicate:
++            if type(value) == str:
++                return f""json_extract(value, '$.{property}') = '{value}' ""
++            else:
++                return f""json_extract(value, '$.{property}') = {value} ""
++        elif test == GreaterPredicate:
++            if type(value) == str:
++                return f""json_extract(value, '$.{property}') > '{value}' ""
++            else:
++                return f""json_extract(value, '$.{property}') > {value} ""
++        elif test == GreaterEqPredicate:
++            if type(value) == str:
++                return f""json_extract(value, '$.{property}') >= '{value}' ""
++            else:
++                return f""json_extract(value, '$.{property}') >= {value} ""
++        elif test == LowerPredicate:
++            if type(value) == str:
++                return f""json_extract(value, '$.{property}') < '{value}' ""
++            else:
++                return f""json_extract(value, '$.{property}') < {value} ""
++        elif test == LowerEqPredicate:
++            if type(value) == str:
++                return f""json_extract(value, '$.{property}') <= '{value}' ""
++            else:
++                return f""json_extract(value, '$.{property}') <= {value} ""
++        else:
++            return """"
++
++
+ if __name__ == ""__main__"":
+     # SELECT t.name, COUNT(SELECT c FROM Cycles [WHERE t.start <= c.start AND c.start < t.end]),
+     # LIST(SELECT m.material FROM Materials [WHERE t.start <= m.start AND m.start < t.end])
+     # FROM Tools
++    # * Cycle
++    # * MaterialEquipped
++    # * ToolEquipped
+ 
++    dbassetRetriever: DbMemoryAssetRetriever = DbMemoryAssetRetriever()
+     context: RootContext = RootContext(
++        dbassetRetriever.get_assest, lambda s: agg_functions.get(s)
+     )
+     # Concrete Example:
++    # SELECT t.name, COUNT(SELECT c FROM Cycles) AS ""cycles"" FROM Tool
++    # a = ctypes.cast(context, ctypes.py_object).value
++    # print(a)
+     query: Query = Query(
+         [
++            Projection(""tool_name""),
+             Projection(""id""),
++            Projection(""uuid""),
++            Aggregation(""count"", Query([Projection(""id"")], ""Cycle""), name=""cycles""),
+         ],
++        ""ToolEquipped"",
+     )
+     results: List[Dict] = query.execute(context)
+ 
+@@ -168,11 +318,13 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""tool_name""),
+             Projection(""id""),
++            Projection(""uuid""),
++            Aggregation(""count"", Query([Projection(""id"")], ""Cycle""), name=""cycles""),
+         ],
++        ""ToolEquipped"",
++        EqPredicate(""tool_name"", ""Tool 0""),
+     )
+     results: List[Dict] = query.execute(context)
+     print(results)
+@@ -183,27 +335,29 @@ def get_group_for_object(o):
+     # FROM Tools AS t
+     query: Query = Query(
+         [
++            Projection(""tool_name""),
++            Aggregation(""count"", Query([Projection(""id"")], ""Cycle""), name=""cycles""),
+             Aggregation(
++                ""flatten"",
++                Query([Projection(""material_name"")], ""MaterialEquipped""),
++                name=""products"",
+             ),
+             SubQuery(
+                 Query(
+                     [
++                        Projection(""material_name""),
+                         Aggregation(
++                            ""count"", Query([Projection(""id"")], ""Cycle""), name=""cycles""
+                         ),
+                     ],
++                    ""MaterialEquipped"",
+                 ),
+                 name=""material_and_count"",
+             ),
+         ],
++        ""ToolEquipped"",
+     )
++    #
+     results: List[Dict] = query.execute(context)
+ 
+     # The result is a list of dicts representing a (probably nested) table
+@@ -214,143 +368,121 @@ def get_group_for_object(o):
+     # FROM Materials
+     query: Query = Query(
+         [
++            Projection(""material_name""),
++            Aggregation(""count"", Query([Projection(""id"")], ""Cycle""), name=""cycles""),
+         ],
++        ""MaterialEquipped"",
++        group_by_clause=[Projection(""material_name"")],
+     )
++    #
+     results: List[Dict] = query.execute(context)
+ 
+     # The result is a list of dicts representing a (probably nested) table
+     print(results)
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""MaterialEquipped"",
+     )
+     results_all_materials: List[Dict] = query.execute(context)
+ 
+     assert results_all_materials == generated_materials
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""ToolEquipped"",
+     )
+     results_all_tools: List[Dict] = query.execute(context)
+ 
+     assert results_all_tools == generated_tools
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""Cycle"",
+     )
+     results_all_cycles: List[Dict] = query.execute(context)
+ 
+     assert results_all_cycles == generated_cycles
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""Cycle"",
++        EqPredicate(""start"", generated_cycles[0].get(""start"")),
+     )
+     results_eq_cycles: List[Dict] = query.execute(context)
+ 
+     assert results_eq_cycles[0] == generated_cycles[0]
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""Cycle"",
++        LowerPredicate(
++            ""start"", generated_cycles[int(len(generated_cycles) / 2)].get(""start"")
++        ),
+     )
+     results_lower_cycle: List[Dict] = query.execute(context)
+ 
++    first_four = generated_cycles[0 : int(len(generated_cycles) / 2)]
+     assert results_lower_cycle == first_four
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""Cycle"",
++        LowerEqPredicate(
++            ""start"", generated_cycles[int(len(generated_cycles) / 2)].get(""start"")
++        ),
+     )
+     results_lower_eq_cycles: List[Dict] = query.execute(context)
+ 
++    first_five = generated_cycles[0 : int(len(generated_cycles) / 2) + 1]
+     assert results_lower_eq_cycles == first_five
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""Cycle"",
++        GreaterPredicate(
++            ""start"", generated_cycles[int(len(generated_cycles) / 2)].get(""start"")
++        ),
+     )
+     results_greater_cycles: List[Dict] = query.execute(context)
+ 
++    first_four = generated_cycles[int(len(generated_cycles) / 2) + 1 :]
+     assert results_greater_cycles == first_four
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""Cycle"",
++        GreaterEqPredicate(
++            ""start"", generated_cycles[int(len(generated_cycles) / 2)].get(""start"")
++        ),
+     )
+     results_greater_eq_cycles: List[Dict] = query.execute(context)
+ 
++    first_five = generated_cycles[int(len(generated_cycles) / 2) :]
+     assert results_greater_eq_cycles == first_five
+ 
+     # Materials
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""MaterialEquipped"",
+         EqPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -360,13 +492,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""MaterialEquipped"",
+         LowerPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -378,13 +506,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""MaterialEquipped"",
+         LowerEqPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -398,13 +522,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""MaterialEquipped"",
+         GreaterPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -416,13 +536,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""MaterialEquipped"",
+         GreaterEqPredicate(
+             ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
+         ),
+@@ -437,13 +553,9 @@ def get_group_for_object(o):
+     # Tools
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""ToolEquipped"",
+         EqPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),
+@@ -454,13 +566,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""ToolEquipped"",
+         LowerPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),
+@@ -472,13 +580,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""ToolEquipped"",
+         LowerEqPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),
+@@ -490,13 +594,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""ToolEquipped"",
+         GreaterPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),
+@@ -508,13 +608,9 @@ def get_group_for_object(o):
+ 
+     query: Query = Query(
+         [
++            Projection(""*""),
+         ],
++        ""ToolEquipped"",
+         GreaterEqPredicate(
+             ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
+         ),"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" # PLC Server Settings
+ from plc_server_client import ApiClient, Configuration
+ from plc_server_client.api.plc_rest_controller_api import PlcRestControllerApi
+ from plc_server_client.model.plc_read_request import PlcReadRequest
+ from plc_server_client.model.plc_read_response import PlcReadResponse
+ 
+ from extract import (
+     AutoGeneratedUUID,
+     Parameter,
+@@ -50,37 +54,31 @@ def read_response(controller_api):
+ 
+ def make_dict_from_response(response: PlcReadResponse):
+     element_dict: dict = {}
+     for i in range(0, len(response.fields)):
+         element_dict.update(
+             {response.fields[i].get(""field""): response.fields[i].get(""value"")}
+         )
+-    element_dict.update({""timestamp"": n})
+     return element_dict
+ 
+ 
+ if __name__ == ""__main__"":
+     # thread der alle x sec ne anfrage macht.
+-    api_client = get_api_client()
+-    controller_api = get_controller_api(api_client)
+-
+-    # threading.Timer(1.0,read_response,[controller_api]).start()
+-    end_result = []
+-    for n in range(0, 100):
+-        end_result.append(make_dict_from_response(read_response(controller_api)))
+ 
+     def get_config() -> dict:
+         return {
+             ""Cycle"": {
+                 ""fields"": {
+                     ""uuid"": AutoGeneratedUUID(),
+                     ""id"": AutoGeneratedField(),
+-                    ""druck"": Parameter(""%DB444:4.0:REAL""),
+                     ""cycle"": Parameter(""%DB4560:12.0:UDINT""),
+                 },
+                 ""primary_key"": ""id"",
+             },
+-            # CREATE TABLE Cycle (id BIGINT SERIAL PRIMARY KEY, material_equipped BIGINT NON NULL)
+-            # CREATE FOREIGN KEY ...
+             ""ToolEquipped"": {
+                 ""fields"": {
+                     ""id"": AutoGeneratedField(),
+@@ -100,11 +98,19 @@ def get_config() -> dict:
+             },
+         }
+ 
+-    # print(states)
+-    processor = StateProcessor(get_config())
+     processor.init_context(end_result[0])
+-    for state in end_result:
+-        processor.process_state(state)
+-    result_end = processor.get_result()
+-    db_sync = SyncDatabase(result_end)
+-    db_sync.synchronize_database()"
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" # PLC Server Settings
++from datetime import datetime
++from time import sleep
++
+ from plc_server_client import ApiClient, Configuration
+ from plc_server_client.api.plc_rest_controller_api import PlcRestControllerApi
+ from plc_server_client.model.plc_read_request import PlcReadRequest
+ from plc_server_client.model.plc_read_response import PlcReadResponse
+ 
++from database_methods import get_all_entitys
+ from extract import (
+     AutoGeneratedUUID,
+     Parameter,
+@@ -50,37 +54,31 @@ def read_response(controller_api):
+ 
+ def make_dict_from_response(response: PlcReadResponse):
+     element_dict: dict = {}
++
+     for i in range(0, len(response.fields)):
+         element_dict.update(
+             {response.fields[i].get(""field""): response.fields[i].get(""value"")}
+         )
++    element_dict.update({""timestamp"": f""{datetime.now()}""})
+     return element_dict
+ 
+ 
+ if __name__ == ""__main__"":
+     # thread der alle x sec ne anfrage macht.
++    api_client: ApiClient = get_api_client()
++    controller_api: PlcRestControllerApi = get_controller_api(api_client)
+ 
+     def get_config() -> dict:
+         return {
+             ""Cycle"": {
+                 ""fields"": {
+                     ""uuid"": AutoGeneratedUUID(),
+                     ""id"": AutoGeneratedField(),
++                    # ""druck"": Parameter(""%DB444:4.0:REAL""),
+                     ""cycle"": Parameter(""%DB4560:12.0:UDINT""),
+                 },
+                 ""primary_key"": ""id"",
+             },
+             ""ToolEquipped"": {
+                 ""fields"": {
+                     ""id"": AutoGeneratedField(),
+@@ -100,11 +98,19 @@ def get_config() -> dict:
+             },
+         }
+ 
++    # threading.Timer(1.0,read_response,[controller_api]).start()
++    end_result = []
++    end_result.append(make_dict_from_response(read_response(controller_api)))
++    processor: StateProcessor = StateProcessor(get_config())
+     processor.init_context(end_result[0])
++    db_sync: SyncDatabase = SyncDatabase(processor.get_result())
++    db_sync.sync_database_with_index()
++    sleep(1)
++    while True:
++        end_result.append(make_dict_from_response(read_response(controller_api)))
++        processor.process_state(end_result[-1])
++        print(end_result[-1])
++        db_sync.set_end_result(processor.get_result())
++        db_sync.sync_database_with_index()
++        sleep(0.1)
++    arrie = get_all_entitys()"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"def get_aggregate_function(self, name: str):
+         pass
+ 
+ 
+ class RootContext(Context):
+     def __init__(self, entity_list_resolver, aggregate_functions):
+         super().__init__()
+@@ -237,16 +238,19 @@ def __init__(
+         self.group_by_clause = group_by_clause
+ 
+     def execute(self, context: Context) -> List[Dict]:
+         objects = context.list_entity(
+             self.entity, self.where_clause, self.group_by_clause
+         )
+-
+         results = []
+         for o in objects:
+             ctx = context.create_query_context(o)
+-            single_result: dict = dict([(s.name, s.execute(ctx)) for s in self.selects])
+-            results.append(single_result)
+-
+         return results
+ 
+ "
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"def get_aggregate_function(self, name: str):
+         pass
+ 
+ 
++#
+ class RootContext(Context):
+     def __init__(self, entity_list_resolver, aggregate_functions):
+         super().__init__()
+@@ -237,16 +238,19 @@ def __init__(
+         self.group_by_clause = group_by_clause
+ 
+     def execute(self, context: Context) -> List[Dict]:
++        ##wieso machen wir die Logic von InMemoryAssetRetriever nicht hier rein???
++        ##wei lhier würde es ja Sinn machen und hingehören wenn ich das Query excute soll es mit ja die Entitys zurück geben
+         objects = context.list_entity(
+             self.entity, self.where_clause, self.group_by_clause
+         )
+         results = []
+         for o in objects:
+             ctx = context.create_query_context(o)
++            for s in self.selects:
++                if s.name == ""*"":
++                    results.append(s.execute(ctx))
++                else:
++                    results.append(dict([(s.name, s.execute(ctx))]))
+         return results
+ 
+ "
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"+import random
++from time import sleep
++from typing import List, Dict
++
++from database_methods import (
++    delete_all_rows_from_pql_entity,
++    migrate,
++    delete_all_rows_from_counter_saving,
++)
++from extract import (
++    StateProcessor,
++    SyncDatabase,
++    Parameter,
++    AutoGeneratedUUID,
++    AutoGeneratedManyToOne,
++    AutoGeneratedField,
++)
++from main import get_sorted_entitys, DbMemoryAssetRetriever
++from pql import (
++    RootContext,
++    agg_functions,
++    Query,
++    Projection,
++    EqPredicate,
++    GreaterEqPredicate,
++    GreaterPredicate,
++    LowerEqPredicate,
++    LowerPredicate,
++)
++
++
++def intiStates():
++    material_id = 1
++    tool_id = 1
++    cycle_id = 1
++    old_cycle_id = 1
++
++    states = []
++
++    random.seed(1)
++
++    for t in range(0, 1000):
++
++        if random.uniform(0.0, 100.0) < 10.0:
++            cycle_id += 1
++        current_cycle_number = cycle_id
++
++        if random.uniform(0.0, 50.0) < 1.0:
++            if old_cycle_id != current_cycle_number:
++                tool_id += 1
++        current_tool = f""Tool {tool_id}""
++        if random.uniform(0.0, 100.0) < 1.0:
++            if old_cycle_id != current_cycle_number:
++                material_id = (material_id + 1) % 3
++        current_material = f""Material {material_id}""
++
++        old_cycle_id = current_cycle_number
++        state = {
++            ""timestamp"": t,
++            ""material_name"": current_material,
++            ""material_type"": current_material,
++            ""tool_name"": current_tool,
++            ""cycle_number"": current_cycle_number,
++        }
++
++        # print(f""Aktueller Zustand: {state}"")
++
++        states.append(state)
++    return states
++
++
++def get_config() -> dict:
++    return {
++        ""Cycle"": {
++            ""fields"": {
++                # ""id"": AutoGeneratedField(),
++                ""id"": Parameter(""cycle_number""),
++                # ""cycle"": Parameter(""cycle_number""),
++                ""uuid"": AutoGeneratedUUID(),
++                ""material_equipped"": AutoGeneratedManyToOne(""MaterialEquipped"", ""id""),
++            },
++            ""primary_key"": ""id"",
++        },
++        # CREATE TABLE Cycle (id BIGINT SERIAL PRIMARY KEY, material_equipped BIGINT NON NULL)
++        # CREATE FOREIGN KEY ...
++        ""ToolEquipped"": {
++            ""fields"": {
++                ""id"": AutoGeneratedField(),
++                ""uuid"": AutoGeneratedUUID(),
++                ""tool_name"": Parameter(""tool_name""),
++            },
++            ""primary_key"": ""id"",
++        },
++        ""MaterialEquipped"": {
++            ""fields"": {
++                ""id"": AutoGeneratedField(),
++                ""uuid"": AutoGeneratedUUID(),
++                ""material_name"": Parameter(""material_name""),
++                ""material_typ"": Parameter(""material_type""),
++            },
++            ""primary_key"": ""id"",
++        },
++    }
++
++
++def test_one():
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
++    states = intiStates()
++    processor: StateProcessor = StateProcessor(get_config())
++    processor.init_context(states[0])
++    db_sync: SyncDatabase = SyncDatabase(processor.get_result())
++    db_sync.sync_database_with_index()
++    for state in states:
++        processor.process_state(state)
++        db_sync.set_end_result(processor.get_result())
++        db_sync.sync_database_with_index()
++    end_result = processor.get_result()
++    end_result_db_values = get_sorted_entitys()
++
++    assert end_result_db_values == end_result
++
++    generated_tools = end_result.get(""ToolEquipped"")
++    generated_cycles = end_result.get(""Cycle"")
++    generated_materials = end_result.get(""MaterialEquipped"")
++
++    dbassetRetriever: DbMemoryAssetRetriever = DbMemoryAssetRetriever()
++    context: RootContext = RootContext(
++        dbassetRetriever.get_assest, lambda s: agg_functions.get(s)
++    )
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""MaterialEquipped"",
++    )
++    results_all_materials: List[Dict] = query.execute(context)
++
++    assert results_all_materials == generated_materials
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""ToolEquipped"",
++    )
++    results_all_tools: List[Dict] = query.execute(context)
++
++    assert results_all_tools == generated_tools
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""Cycle"",
++    )
++    results_all_cycles: List[Dict] = query.execute(context)
++
++    assert results_all_cycles == generated_cycles
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""Cycle"",
++        EqPredicate(""start"", generated_cycles[0].get(""start"")),
++    )
++    results_eq_cycles: List[Dict] = query.execute(context)
++
++    assert results_eq_cycles[0] == generated_cycles[0]
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""Cycle"",
++        LowerPredicate(
++            ""start"", generated_cycles[int(len(generated_cycles) / 2)].get(""start"")
++        ),
++    )
++    results_lower_cycle: List[Dict] = query.execute(context)
++
++    first_four = generated_cycles[0 : int(len(generated_cycles) / 2)]
++    assert results_lower_cycle == first_four
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""Cycle"",
++        LowerEqPredicate(
++            ""start"", generated_cycles[int(len(generated_cycles) / 2)].get(""start"")
++        ),
++    )
++    results_lower_eq_cycles: List[Dict] = query.execute(context)
++
++    first_five = generated_cycles[0 : int(len(generated_cycles) / 2) + 1]
++    assert results_lower_eq_cycles == first_five
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""Cycle"",
++        GreaterPredicate(
++            ""start"", generated_cycles[int(len(generated_cycles) / 2)].get(""start"")
++        ),
++    )
++    results_greater_cycles: List[Dict] = query.execute(context)
++
++    first_four = generated_cycles[int(len(generated_cycles) / 2) + 1 :]
++    assert results_greater_cycles == first_four
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""Cycle"",
++        GreaterEqPredicate(
++            ""start"", generated_cycles[int(len(generated_cycles) / 2)].get(""start"")
++        ),
++    )
++    results_greater_eq_cycles: List[Dict] = query.execute(context)
++
++    first_five = generated_cycles[int(len(generated_cycles) / 2) :]
++    assert results_greater_eq_cycles == first_five
++
++    # Materials
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""MaterialEquipped"",
++        EqPredicate(
++            ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
++        ),
++    )
++    results_eq: List[Dict] = query.execute(context)
++    assert results_eq[0] == generated_materials[int(len(generated_materials) / 2)]
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""MaterialEquipped"",
++        LowerPredicate(
++            ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
++        ),
++    )
++    results_lower_materials: List[Dict] = query.execute(context)
++
++    last_half_materials = generated_materials[0 : int(len(generated_materials) / 2)]
++    assert results_lower_materials == last_half_materials
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""MaterialEquipped"",
++        LowerEqPredicate(
++            ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
++        ),
++    )
++    results_lower_eq_materials: List[Dict] = query.execute(context)
++
++    last_half_plus_one_materials = generated_materials[
++        0 : int(len(generated_materials) / 2) + 1
++    ]
++    assert results_lower_eq_materials == last_half_plus_one_materials
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""MaterialEquipped"",
++        GreaterPredicate(
++            ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
++        ),
++    )
++    results_greater_materials: List[Dict] = query.execute(context)
++
++    first_half_materials = generated_materials[int(len(generated_materials) / 2) + 1 :]
++    assert results_greater_materials == first_half_materials
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""MaterialEquipped"",
++        GreaterEqPredicate(
++            ""start"", generated_materials[int(len(generated_materials) / 2)].get(""start"")
++        ),
++    )
++    results_greater_eq_materials: List[Dict] = query.execute(context)
++
++    first_half_minus_one_materials = generated_materials[
++        int(len(generated_materials) / 2) :
++    ]
++    assert results_greater_eq_materials == first_half_minus_one_materials
++
++    # Tools
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""ToolEquipped"",
++        EqPredicate(
++            ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
++        ),
++    )
++    results_eq_tool = query.execute(context)
++
++    assert results_eq_tool[0] == generated_tools[int(len(generated_tools) / 2)]
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""ToolEquipped"",
++        LowerPredicate(
++            ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
++        ),
++    )
++    results_tool_lower: List[Dict] = query.execute(context)
++
++    first_half_tools = generated_tools[0 : int(len(generated_tools) / 2)]
++    assert results_tool_lower == first_half_tools
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""ToolEquipped"",
++        LowerEqPredicate(
++            ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
++        ),
++    )
++    results_lower_eq_tools: List[Dict] = query.execute(context)
++
++    first_half_plus_one_tools = generated_tools[0 : int(len(generated_tools) / 2) + 1]
++    assert results_lower_eq_tools == first_half_plus_one_tools
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""ToolEquipped"",
++        GreaterPredicate(
++            ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
++        ),
++    )
++    results_greater_tools: List[Dict] = query.execute(context)
++
++    greater_tools = generated_tools[int(len(generated_tools) / 2) + 1 :]
++    assert results_greater_tools == greater_tools
++
++    query: Query = Query(
++        [
++            Projection(""*""),
++        ],
++        ""ToolEquipped"",
++        GreaterEqPredicate(
++            ""start"", generated_tools[int(len(generated_tools) / 2)].get(""start"")
++        ),
++    )
++    results_greater_eq_tools: List[Dict] = query.execute(context)
++
++    greater_eq_tools = generated_tools[int(len(generated_tools) / 2) :]
++    assert results_greater_eq_tools == greater_eq_tools"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"+from time import sleep
++
++from plc_server_client import ApiClient
++from plc_server_client.api.plc_rest_controller_api import PlcRestControllerApi
++
++from database_methods import (
++    migrate,
++    delete_all_rows_from_pql_entity,
++    delete_all_rows_from_counter_saving,
++)
++from extract import (
++    AutoGeneratedUUID,
++    AutoGeneratedField,
++    Parameter,
++    StateProcessor,
++    SyncDatabase,
++    FieldType,
++)
++from main import get_sorted_entitys
++from plc import (
++    get_api_client,
++    get_controller_api,
++    make_dict_from_response,
++    read_response,
++)
++
++api_client: ApiClient = get_api_client()
++controller_api: PlcRestControllerApi = get_controller_api(api_client)
++
++
++def get_config() -> dict:
++    return {
++        ""Cycle"": {
++            ""fields"": {
++                ""uuid"": AutoGeneratedUUID(),
++                ""id"": AutoGeneratedField(),
++                ""cycle"": Parameter(""%DB4560:12.0:UDINT""),
++            },
++            ""primary_key"": ""id"",
++        },
++        ""ToolEquipped"": {
++            ""fields"": {
++                ""id"": AutoGeneratedField(),
++                ""uuid"": AutoGeneratedUUID(),
++                ""tool_name"": Parameter(""%DB444:6.0:REAL""),
++            },
++            ""primary_key"": ""id"",
++        },
++        ""MaterialEquipped"": {
++            ""fields"": {
++                ""id"": AutoGeneratedField(),
++                ""uuid"": AutoGeneratedUUID(),
++                ""material_name"": Parameter(""%DB444.DBD22:DINT""),
++                ""material_typ"": Parameter(""%DB444.DBW20:INT""),
++            },
++            ""primary_key"": ""id"",
++        },
++    }
++
++
++def test_one():
++    # print(get_sorted_entitys())
++    # threading.Timer(1.0,read_response,[controller_api]).start()
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
++    end_result = []
++    end_result.append(make_dict_from_response(read_response(controller_api)))
++    processor: StateProcessor = StateProcessor(get_config())
++    processor.init_context(end_result[0])
++    db_sync: SyncDatabase = SyncDatabase(processor.get_result())
++    db_sync.sync_database_with_index()
++    sleep(1)
++    for n in range(1, 12):
++        end_result.append(make_dict_from_response(read_response(controller_api)))
++        processor.process_state(end_result[-1])
++        db_sync.set_end_result(processor.get_result())
++        db_sync.sync_database_with_index()
++        sleep(1)
++    end_result_processor = processor.get_result()
++    end_result_db = get_sorted_entitys()
++
++    assert end_result_processor == end_result_db
++
++    first_timestamp: str = end_result[0].get(""timestamp"")
++    last_timestamp: str = end_result[-1].get(""timestamp"")
++
++    for el in end_result_db.keys():
++        first_ts_db: str = end_result_db.get(el)[0].get(""start"")
++        last_ts_db: str = end_result_db.get(el)[-1].get(""start"")
++
++        first_ts_processor: str = end_result_processor.get(el)[0].get(""start"")
++        last_ts_processor: str = end_result_processor.get(el)[-1].get(""start"")
++
++        if len(end_result_db.get(el)) == 1 and len(end_result_processor.get(el)) == 1:
++            # spezial Fall start gleich ende sonst nicht
++            assert (
++                first_timestamp == first_ts_db == first_ts_processor
++            ), f""Assertion Error first Timestamp from PLC Server: {first_timestamp} got first Timestamp from {el} as Database {first_ts_db} and from Processor {first_ts_processor}""
++            assert (
++                first_timestamp == last_ts_db == last_ts_processor
++            ), f""Assertion Error last Timestamp from PLC Server: {first_timestamp} got first Timestamp from {el} as Database {last_ts_db} and from Processor {last_ts_processor}""
++        else:
++            assert (
++                first_timestamp == first_ts_db == first_ts_processor
++            ), f""Assertion Error first Timestamp from PLC Server: {first_timestamp} got first Timestamp from {el} as Database {first_ts_db} and from Processor {first_ts_processor}""
++            assert (
++                last_timestamp == last_ts_db == last_ts_processor
++            ), f""Assertion Error last Timestamp from PLC Server: {last_timestamp} got first Timestamp from {el} as Database {last_ts_db} and from Processor {last_ts_processor}""
++            assert get_config().get(el).get(""fields"")
++
++        for parameter in get_config().get(el).get(""fields""):
++            element: FieldType = get_config().get(el).get(""fields"").get(parameter)
++            if type(element) == Parameter:
++                first_value_end_result = end_result[0].get(element.field_name)
++                first_value_db_result = end_result_db.get(el)[0].get(parameter)
++                first_value_processor = end_result_processor.get(el)[0].get(parameter)
++
++                last_value_end_result = end_result[-1].get(element.field_name)
++                last_value_db_result = end_result_db.get(el)[-1].get(parameter)
++                last_value_processor = end_result_processor.get(el)[-1].get(parameter)
++
++                if (
++                    len(end_result_db.get(el)) == 1
++                    and len(end_result_processor.get(el)) == 1
++                ):
++                    assert (
++                        first_value_end_result
++                        == first_value_db_result
++                        == first_value_processor
++                    ), f""Assertion Error {first_value_end_result} didnt match to result of db: {first_value_db_result} and processor:{first_value_processor}""
++
++                    assert (
++                        last_value_end_result
++                        == first_value_db_result
++                        == first_value_processor
++                    ), f""Assertion Error {first_value_end_result} didnt match to result of db: {first_value_db_result} and processor:{first_value_processor}""
++                else:
++                    assert (
++                        first_value_end_result
++                        == first_value_db_result
++                        == first_value_processor
++                    ), f""Assertion Error {first_value_end_result} didnt match to result of db: {first_value_db_result} and processor:{first_value_processor}""
++
++                    assert (
++                        last_value_end_result
++                        == last_value_db_result
++                        == last_value_processor
++                    ), f""Assertion Error {last_value_end_result} didnt match to result of db: {last_value_db_result} and processor:{last_value_processor}"""
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"-import pytest
+-
+-from database_methods import migrate, delete_all_rows, get_all_entitys, PqlEntity
+ from extract import SyncDatabase
+ 
+ 
+ def run_database_processor(end_result):
+     migrate()
+-    delete_all_rows()
+     db_sync: SyncDatabase = SyncDatabase(end_result)
+     db_sync.synchronize_database()
+     return get_all_entitys()"
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"+from database_methods import (
++    migrate,
++    delete_all_rows_from_pql_entity,
++    get_all_entitys,
++    PqlEntity,
++    delete_all_rows_from_counter_saving,
++)
+ from extract import SyncDatabase
+ 
+ 
+ def run_database_processor(end_result):
+     migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
+     db_sync: SyncDatabase = SyncDatabase(end_result)
+     db_sync.synchronize_database()
+     return get_all_entitys()"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"+from typing import List, Dict
++
++from database_methods import (
++    PqlEntity,
++    insert_entity,
++    delete_all_rows_from_pql_entity,
++    migrate,
++    delete_all_rows_from_counter_saving,
++)
++from main import DbMemoryAssetRetriever
++from pql import (
++    Query,
++    Projection,
++    Aggregation,
++    RootContext,
++    agg_functions,
++    EqPredicate,
++)
++
++
++def test_one():
++    states: dict = {
++        ""Cycle"": [
++            {
++                ""id"": 21,
++                ""uuid"": ""b1cb1816-7d85-457c-9f32-2a1422d00e17"",
++                ""start"": 1,
++                ""end"": 2,
++                ""material_equipped"": 1,
++            },
++            {
++                ""id"": 22,
++                ""uuid"": ""ce9c02e4-aafb-4062-97ff-bbaaeca05990"",
++                ""start"": 3,
++                ""end"": 4,
++                ""material_equipped"": 1,
++            },
++        ],
++        ""MaterialEquipped"": [
++            {
++                ""id"": 1,
++                ""uuid"": ""5bb7fb0f-d8d9-415b-8725-460b8ce504db"",
++                ""material_name"": ""Material 1"",
++                ""start"": 1,
++                ""end"": 4,
++            }
++        ],
++    }
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
++    for el in states:
++        for en in states.get(el):
++            insert_entity(
++                PqlEntity(
++                    id=en.get(""uuid""),
++                    name=el,
++                    start=en.get(""start""),
++                    end=en.get(""end""),
++                    value=en,
++                )
++            )
++
++    # Concrete Example:
++    # SELECT COUNT(*) FROM Cycles, Material AS m WHERE m.material_name = ""Material 1""
++    dbassetRetriever: DbMemoryAssetRetriever = DbMemoryAssetRetriever()
++    context: RootContext = RootContext(
++        dbassetRetriever.get_assest, lambda s: agg_functions.get(s)
++    )
++    query: Query = Query(
++        [
++            Projection(""material_name""),
++            Projection(""id""),
++            Projection(""uuid""),
++            Aggregation(""count"", Query([Projection(""id"")], ""Cycle""), name=""cycles""),
++        ],
++        ""MaterialEquipped"",
++        EqPredicate(""material_name"", ""Material 1""),
++    )
++    results: List[Dict] = query.execute(context)
++    assert results == [
++        {""material_name"": ""Material 1""},
++        {""id"": 1},
++        {""uuid"": ""5bb7fb0f-d8d9-415b-8725-460b8ce504db""},
++        {""cycles"": 2},
++    ]
++
++
++def test_two():
++    states: dict = {
++        ""Cycle"": [
++            {
++                ""id"": 21,
++                ""uuid"": ""b1cb1816-7d85-457c-9f32-2a1422d00e17"",
++                ""start"": 1,
++                ""end"": 2,
++                ""material_equipped"": 1,
++            },
++            {
++                ""id"": 22,
++                ""uuid"": ""ce9c02e4-aafb-4062-97ff-bbaaeca05990"",
++                ""start"": 3,
++                ""end"": 4,
++                ""material_equipped"": 1,
++            },
++        ],
++        ""MaterialEquipped"": [
++            {
++                ""id"": 1,
++                ""uuid"": ""5bb7fb0f-d8d9-415b-8725-460b8ce504db"",
++                ""material_name"": ""Material 1"",
++                ""start"": 1,
++                ""end"": 4,
++            }
++        ],
++    }
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
++    for el in states:
++        for en in states.get(el):
++            insert_entity(
++                PqlEntity(
++                    id=en.get(""uuid""),
++                    name=el,
++                    start=en.get(""start""),
++                    end=en.get(""end""),
++                    value=en,
++                )
++            )
++
++    # Concrete Example:
++    # SELECT COUNT(*) FROM Cycles, Material AS m WHERE m.material_name = ""Material 1""
++    dbassetRetriever: DbMemoryAssetRetriever = DbMemoryAssetRetriever()
++    context: RootContext = RootContext(
++        dbassetRetriever.get_assest, lambda s: agg_functions.get(s)
++    )
++    query: Query = Query(
++        [
++            Aggregation(""count"", Query([Projection(""*"")], ""Cycle""), name=""cycles""),
++        ],
++        ""Cycle"",
++        group_by_clause=[Projection(""Cycle"")],
++    )
++    results: List[Dict] = query.execute(context)
++    assert results == [{""cycles"": 1}, {""cycles"": 1}]"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";"-import json
+-from typing import overload
+-
+ import pytest
+ 
+ import extract
+-from database_methods import migrate, delete_all_rows, PqlEntity, get_all_entitys
+ from extract import (
+     Parameter,
+     AutoGeneratedField,
+@@ -14,7 +16,6 @@
+     AutoGeneratedManyToMany,
+     AutoGeneratedUUID,
+ )
+-from faker import Faker
+ 
+ extract.faker1 = Faker()
+ Faker.seed(4711)
+@@ -47,6 +48,9 @@ def run_processor(states):
+     :param states:
+     :return:
+     """"""
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+     processor = StateProcessor(get_config())
+@@ -66,7 +70,6 @@ def test_one():
+     ]
+ 
+     results = run_processor(states)
+-    print(results)
+     assert len(results.get(""Cycle"")) == 2
+     assert len(results.get(""MaterialEquipped"")) == 1
+     assert results.get(""Cycle"")[0].get(""start"") == 1
+@@ -84,7 +87,6 @@ def test_two():
+     ]
+ 
+     results = run_processor(states)
+-    print(results)
+ 
+     assert len(results.get(""Cycle"")) == 2
+     assert len(results.get(""MaterialEquipped"")) == 1
+@@ -103,7 +105,6 @@ def test_cycle_material_switch():
+     ]
+ 
+     results = run_processor(states)
+-    print(results)
+ 
+     material_dict: dict = {
+         ""id"": 1,
+@@ -164,6 +165,10 @@ def run_processor1(states):
+     :param states:
+     :return:
+     """"""
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -204,7 +209,6 @@ def test_tool_and_others_not():
+     ]
+ 
+     results = run_processor1(states)
+-    print(results)
+ 
+     tool_dict: dict = {
+         ""ToolEquipped"": [
+@@ -248,6 +252,9 @@ def run_processor2(states):
+     :param states:
+     :return:
+     """"""
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -294,7 +301,6 @@ def test_tool_change_and_relation_with_cycle():
+     ]
+ 
+     results = run_processor2(states)
+-    print(results)
+     tool_dict: dict = {
+         ""ToolEquipped"": [
+             {
+@@ -363,6 +369,9 @@ def run_processor3(states):
+     :param states:
+     :return:
+     """"""
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -409,7 +418,6 @@ def test_tool_change_and_relation_befor_entity():
+     ]
+ 
+     results = run_processor3(states)
+-    print(results)
+     assert results == {
+         ""Cycle"": [
+             {
+@@ -510,6 +518,9 @@ def run_processor4(states):
+     :param states:
+     :return:
+     """"""
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -556,7 +567,6 @@ def test_relation_one_to_one_true():
+     ]
+ 
+     results = run_processor4(states)
+-    print(results)
+     assert results == {
+         ""Cycle"": [
+             {
+@@ -665,7 +675,6 @@ def test_relation_one_to_one_false():
+     ]
+     with pytest.raises(RuntimeError):
+         end_result = run_processor4(states)
+-        print(end_result)
+ 
+ 
+ def test_relation_one_to_one_false_two():
+@@ -703,7 +712,6 @@ def test_relation_one_to_one_false_two():
+     ]
+     with pytest.raises(RuntimeError):
+         end_result = run_processor4(states)
+-        print(end_result)
+ 
+ 
+ def test_relation_one_to_one_false_three():
+@@ -741,7 +749,6 @@ def test_relation_one_to_one_false_three():
+     ]
+     with pytest.raises(RuntimeError):
+         end_result = run_processor4(states)
+-        print(end_result)
+ 
+ 
+ def get_config5() -> dict:
+@@ -771,6 +778,9 @@ def run_processor5(states):
+     :param states:
+     :return:
+     """"""
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -817,7 +827,6 @@ def test_relation_one_to_many_true():
+     ]
+ 
+     end_result = run_processor5(states)
+-    print(end_result)
+     assert end_result == {
+         ""Cycle"": [
+             {
+@@ -913,7 +922,6 @@ def test_relation_one_to_many_false():
+     ]
+     with pytest.raises(RuntimeError):
+         end_result = run_processor5(states)
+-        print(end_result)
+ 
+ 
+ def get_config6() -> dict:
+@@ -943,6 +951,9 @@ def run_processor6(states):
+     :param states:
+     :return:
+     """"""
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -1031,7 +1042,6 @@ def test_relation_many_to_many_true():
+     ]
+ 
+     end_result = run_processor6(states)
+-    print(end_result)
+     assert end_result == {
+         ""Cycle"": [
+             {"
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" import pytest
++from faker import Faker
+ 
+ import extract
++from database_methods import (
++    migrate,
++    delete_all_rows_from_pql_entity,
++    delete_all_rows_from_counter_saving,
++)
+ from extract import (
+     Parameter,
+     AutoGeneratedField,
+@@ -14,7 +16,6 @@
+     AutoGeneratedManyToMany,
+     AutoGeneratedUUID,
+ )
+ 
+ extract.faker1 = Faker()
+ Faker.seed(4711)
+@@ -47,6 +48,9 @@ def run_processor(states):
+     :param states:
+     :return:
+     """"""
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+     processor = StateProcessor(get_config())
+@@ -66,7 +70,6 @@ def test_one():
+     ]
+ 
+     results = run_processor(states)
+     assert len(results.get(""Cycle"")) == 2
+     assert len(results.get(""MaterialEquipped"")) == 1
+     assert results.get(""Cycle"")[0].get(""start"") == 1
+@@ -84,7 +87,6 @@ def test_two():
+     ]
+ 
+     results = run_processor(states)
+ 
+     assert len(results.get(""Cycle"")) == 2
+     assert len(results.get(""MaterialEquipped"")) == 1
+@@ -103,7 +105,6 @@ def test_cycle_material_switch():
+     ]
+ 
+     results = run_processor(states)
+ 
+     material_dict: dict = {
+         ""id"": 1,
+@@ -164,6 +165,10 @@ def run_processor1(states):
+     :param states:
+     :return:
+     """"""
++
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -204,7 +209,6 @@ def test_tool_and_others_not():
+     ]
+ 
+     results = run_processor1(states)
+ 
+     tool_dict: dict = {
+         ""ToolEquipped"": [
+@@ -248,6 +252,9 @@ def run_processor2(states):
+     :param states:
+     :return:
+     """"""
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -294,7 +301,6 @@ def test_tool_change_and_relation_with_cycle():
+     ]
+ 
+     results = run_processor2(states)
+     tool_dict: dict = {
+         ""ToolEquipped"": [
+             {
+@@ -363,6 +369,9 @@ def run_processor3(states):
+     :param states:
+     :return:
+     """"""
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -409,7 +418,6 @@ def test_tool_change_and_relation_befor_entity():
+     ]
+ 
+     results = run_processor3(states)
+     assert results == {
+         ""Cycle"": [
+             {
+@@ -510,6 +518,9 @@ def run_processor4(states):
+     :param states:
+     :return:
+     """"""
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -556,7 +567,6 @@ def test_relation_one_to_one_true():
+     ]
+ 
+     results = run_processor4(states)
+     assert results == {
+         ""Cycle"": [
+             {
+@@ -665,7 +675,6 @@ def test_relation_one_to_one_false():
+     ]
+     with pytest.raises(RuntimeError):
+         end_result = run_processor4(states)
+ 
+ 
+ def test_relation_one_to_one_false_two():
+@@ -703,7 +712,6 @@ def test_relation_one_to_one_false_two():
+     ]
+     with pytest.raises(RuntimeError):
+         end_result = run_processor4(states)
+ 
+ 
+ def test_relation_one_to_one_false_three():
+@@ -741,7 +749,6 @@ def test_relation_one_to_one_false_three():
+     ]
+     with pytest.raises(RuntimeError):
+         end_result = run_processor4(states)
+ 
+ 
+ def get_config5() -> dict:
+@@ -771,6 +778,9 @@ def run_processor5(states):
+     :param states:
+     :return:
+     """"""
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -817,7 +827,6 @@ def test_relation_one_to_many_true():
+     ]
+ 
+     end_result = run_processor5(states)
+     assert end_result == {
+         ""Cycle"": [
+             {
+@@ -913,7 +922,6 @@ def test_relation_one_to_many_false():
+     ]
+     with pytest.raises(RuntimeError):
+         end_result = run_processor5(states)
+ 
+ 
+ def get_config6() -> dict:
+@@ -943,6 +951,9 @@ def run_processor6(states):
+     :param states:
+     :return:
+     """"""
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
+     extract.faker1 = Faker()
+     Faker.seed(4711)
+ 
+@@ -1031,7 +1042,6 @@ def test_relation_many_to_many_true():
+     ]
+ 
+     end_result = run_processor6(states)
+     assert end_result == {
+         ""Cycle"": [
+             {"
+KO;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" from typing import List, Dict
+ 
+-from main import create_tools, create_cycles, create_materials, InMemoryAssetRetriever
+ from pql import (
+     agg_functions,
+     RootContext,
+@@ -10,110 +15,88 @@
+     SubQuery,
+ )
+ 
+-generated_tools = create_tools(5)
+-generated_cycles = create_cycles(100)
+-generated_materials = create_materials(10)
+ 
+-asset_retriever = InMemoryAssetRetriever()
+-context = RootContext(asset_retriever.get_assets, lambda s: agg_functions.get(s))
+ 
+ 
+-def test_query():
+     query: Query = Query(
+         [
+-            Projection(""name""),
+-            Aggregation(""count"", Query([Projection(""*"")], ""Cycles""), name=""cycles""),
+             Aggregation(
+-                ""flatten"", Query([Projection(""material"")], ""Materials""), name=""products""
+             ),
+             SubQuery(
+                 Query(
+                     [
+-                        Projection(""material""),
+                         Aggregation(
+-                            ""count"", Query([Projection(""*"")], ""Cycles""), name=""cycles""
+                         ),
+                     ],
+-                    ""Materials"",
+                 ),
+                 name=""material_and_count"",
+             ),
+         ],
+-        ""Tools"",
+     )
+ 
+     results: List[Dict] = query.execute(context)
+-    assert results[0] == {
+-        ""name"": ""Tool 0"",
+-        ""cycles"": 26,
+-        ""products"": [""Material 0"", ""Material 1""],
+-        ""material_and_count"": [
+-            {""material"": ""Material 0"", ""cycles"": 14},
+-            {""material"": ""Material 1"", ""cycles"": 14},
+-        ],
+-    }
+-
+-
+-# def test_part_query():
+-#     query = Query(
+-#                 [
+-#                     Projection(""material""),
+-#                     Aggregation(
+-#                         ""count"", Query([Projection(""*"")], ""Cycles""), name=""cycles""
+-#                     ),
+-#                 ],
+-#                 ""Materials"",
+-#             )
+-#     resulst = query.execute(context)
+-#     print(resulst)
+-#
+-# def test_part_qury2():
+-#     query = Query(
+-#     [
+-#         Projection(""name""),
+-#         Aggregation(""count"", Query([Projection(""*"")], ""Cycles""), name=""cycles""),
+-#         Aggregation(
+-#             ""flatten"", Query([Projection(""material"")], ""Materials""), name=""products""
+-#         )],
+-#     ""Materials"",
+-# )
+-#     result = query.execute(context)
+-#     print(result)
+-#
+-# def test_simple_group_by():
+-#     # print(generated_materials)
+-#     query =   Query(
+-#         [Projection(""id""),Projection(""machine""),
+-#          Aggregation(""count"",
+-#                      Query(
+-#             [Projection(""machine"")],
+-#             ""Materials""),name=""Anzahl"")],
+-#         ""Materials"")
+-#     result = query.execute(context)
+-#     print(result)
+-#
+-# def test_count_material_on_machine():
+-#     pass
+-# def test_sub_query():
+-#     query = SubQuery(Query([Projection(""id""), Projection(""start""), Projection(""end""), Projection(""machine"")], ""Cycles""),""Cycles"")
+-#     query.execute(context)
+-# def test_sub_query2():
+-#     query = Query(
+-#     [
+-#         SubQuery(
+-#             Query(
+-#                 [
+-#                     Projection(""material""),
+-#                     Aggregation(
+-#                         ""count"", Query([Projection(""*"")], ""Cycles""), name=""cycles""
+-#                     ),
+-#                 ],
+-#                 ""Materials"",
+-#             ),
+-#             name=""material_and_count"",
+-#         ),
+-#     ],
+-#     ""Tools"",
+-# )
+-#     results= query.execute(context)
+-#     print(results)"
+OK;11;pragmaticindustries;pql-demo;661dd80e6a208ea196ac60692d9578bac4a49bfb;"Added example (#25)
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+cleaned up Code
+
+introdiced DbmemoryAssetRetriever
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+ran black and set other echo level
+
+added Tests and added that the AssetReriever now working from DB.
+
+ran black
+
+added test for PLC Server
+
+made complete test with plc server but got timestamp problems,tryed to fix them
+
+fixed Timestamp Error
+
+zwischenstand
+
+more tests
+
+ran black
+
+optimized imports
+
+zwischenstand
+
+added config for id in DB
+
+cleaned up code
+
+cleaned up code
+
+fixed json deserizable errors
+
+ran black
+
+tryed to fix errors
+
+added plc to requirements.txt
+
+added secret for plc-server-openapi-client
+
+old version
+
+commented in
+
+commented in
+
+fixed tests
+
+fixed tests
+
+removed print
+
+ran black
+
+made valid test Data
+
+removed prints
+
+* Added example
+
+added plc server
+
+ran black
+
+optimized imports
+
+tryed to figure out what the AssesRetreiver does
+
+tryed to figure out what the AssesRetreiver does
+
+cleaned up code
+
+made more methods
+
+made some Comments
+
+made some Comments
+
+cleaned up Code
+
+* cleaned up Code
+
+* Removed faker uuid
+
+Co-authored-by: julian <j.feinauer@pragmaticminds.de>";" from typing import List, Dict
+ 
++from database_methods import (
++    migrate,
++    delete_all_rows_from_pql_entity,
++    delete_all_rows_from_counter_saving,
++)
++from main import DbMemoryAssetRetriever, create_tools, create_cycles, create_materials
+ from pql import (
+     agg_functions,
+     RootContext,
+@@ -10,110 +15,88 @@
+     SubQuery,
+ )
+ 
+ 
++def test_query():
++    migrate()
++    delete_all_rows_from_pql_entity()
++    delete_all_rows_from_counter_saving()
++    create_tools(5)
++    create_cycles(100)
++    create_materials(10)
+ 
++    dbassetRetriever: DbMemoryAssetRetriever = DbMemoryAssetRetriever()
++    context: RootContext = RootContext(
++        dbassetRetriever.get_assest, lambda s: agg_functions.get(s)
++    )
+ 
+     query: Query = Query(
+         [
++            Projection(""tool_name""),
++            Aggregation(""count"", Query([Projection(""*"")], ""Cycle""), name=""cycles""),
+             Aggregation(
++                ""flatten"",
++                Query([Projection(""material_name"")], ""MaterialEquipped""),
++                name=""products"",
+             ),
+             SubQuery(
+                 Query(
+                     [
++                        Projection(""material_name""),
+                         Aggregation(
++                            ""count"", Query([Projection(""*"")], ""Cycle""), name=""cycles""
+                         ),
+                     ],
++                    ""MaterialEquipped"",
+                 ),
+                 name=""material_and_count"",
+             ),
+         ],
++        ""ToolEquipped"",
+     )
+ 
+     results: List[Dict] = query.execute(context)
++    assert results == [
++        {""tool_name"": ""Tool 0""},
++        {""cycles"": 26},
++        {""products"": [""Material 0"", ""Material 1""]},
++        {
++            ""material_and_count"": [
++                {""material_name"": ""Material 0""},
++                {""cycles"": 14},
++                {""material_name"": ""Material 1""},
++                {""cycles"": 14},
++            ]
++        },
++        {""tool_name"": ""Tool 1""},
++        {""cycles"": 31},
++        {""products"": [""Material 1""]},
++        {""material_and_count"": [{""material_name"": ""Material 1""}, {""cycles"": 16}]},
++        {""tool_name"": ""Tool 2""},
++        {""cycles"": 28},
++        {""products"": [""Material 0"", ""Material 1"", ""Material 0""]},
++        {
++            ""material_and_count"": [
++                {""material_name"": ""Material 0""},
++                {""cycles"": 20},
++                {""material_name"": ""Material 1""},
++                {""cycles"": 7},
++                {""material_name"": ""Material 0""},
++                {""cycles"": 0},
++            ]
++        },
++        {""tool_name"": ""Tool 3""},
++        {""cycles"": 0},
++        {""products"": [""Material 1"", ""Material 0""]},
++        {
++            ""material_and_count"": [
++                {""material_name"": ""Material 1""},
++                {""cycles"": 0},
++                {""material_name"": ""Material 0""},
++                {""cycles"": 0},
++            ]
++        },
++        {""tool_name"": ""Tool 4""},
++        {""cycles"": 0},
++        {""products"": []},
++        {""material_and_count"": []},
++    ]"

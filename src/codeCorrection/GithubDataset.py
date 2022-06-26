@@ -168,9 +168,14 @@ class GithubDataset:
         return x_train, y_train
 
 
-j = 0
-for i in range(0, 600, 10):
-    dataset = GithubDataset('python', 900, ['memory', 'error'], 100 + i, 90 + i)
+j = 4
+for i in range(0, 100, 10):
+    # 130 / 120
+    dataset = GithubDataset('python', 900, ['memory', 'error'], 10 + i, 0 + i)
+    dataset.load_commits()
+    dataset.save('output\\dataset_{j}.csv'.format(j=j))
+    j += 1
+
 '''
 j = 0
 for i in range(0, 100, 10):
@@ -186,3 +191,6 @@ for i in range(0, 100, 10):
 #
 # frame = pd.concat(li, axis=0, ignore_index=True)
 # frame.to_csv('output\\dataset_all.csv', sep=';', index=False)
+
+
+
