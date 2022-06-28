@@ -9,7 +9,8 @@ if __name__ == '__main__':
     function_index = 0
     pdf = PDF()
     pdf.alias_nb_pages()
-    #pdf.add_page()
+    pdf.startPageNums()
+    # pdf.add_page()
     # pdf.add_summary(None)
 
     for file_path in files_paths:
@@ -19,5 +20,6 @@ if __name__ == '__main__':
             pdf.add_function(codeArray[function_index])
             function_index += 1
 
+    pdf.insertTOC()
     pdf_path = ''.join(os.path.dirname(os.path.abspath(__file__)).split(IGNORE_DIR_NAME)[0]) + 'output/'
     pdf.save(pdf_path, "test")

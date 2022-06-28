@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 .idea/*
 src/codeCorrection/define.py
+src/codeCorrection/output/*
+src/codeCorrection/logs/*
 # C extensions
 *.so
 

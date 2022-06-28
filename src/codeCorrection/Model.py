@@ -9,13 +9,17 @@ train_size = 0
 val_size = 0
 
 
-def create_base_model(add_custom_layers_func) -> Model:
+def create_base_model(add_custom_layers_func, encoder=None) -> Model:
     m = Sequential()
-    add_custom_layers_func(m)
+    if encoder is not None:
+        add_custom_layers_func(m, encoder)
+    else:
+        add_custom_layers_func(m)
     m.add(Flatten())
     m.add(tf.keras.layers.Dense(1, activation="sigmoid"))  # tf.keras.activations.softmax))
 
-    m.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=ref_lr / ref_batch_size * batch_size),
+    m.compile(optimizer=tf.keras.optimizers.Adam(1e-4),
+              # tf.keras.optimizers.SGD(learning_rate=ref_lr / ref_batch_size * batch_size),
               loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=["accuracy"])
     # m.build()
@@ -59,6 +63,27 @@ def classic_layers(model):
     model.add(tf.keras.layers.GlobalAveragePooling1D())
     model.add(tf.keras.layers.Dropout(0.2))
     model.add(tf.keras.layers.Dense(1, activation=tf.keras.activations.sigmoid))
+
+
+def add_mlp_layers2(model, encoder):
+    model = tf.keras.Sequential([
+        tf.keras.layers.Embedding(
+            input_dim=len(encoder.get_vocabulary()),
+            output_dim=64,
+            # Use masking to handle the variable sequence lengths
+            mask_zero=True),
+        tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dense(1)
+    ])
+
+
+def add_lstm_layers(model):
+    for _ in range(5):
+        model.add(tf.keras.layers.LSTM(units=2048, return_sequences=True))
+        model.add(tf.keras.layers.BatchNormalization())
+        model.add(tf.keras.layers.Activation(activation=tf.keras.activations.tanh))
+
 
 # Function to train model
 def train_model(m: Model, dataset, dataset_test):
