@@ -92,20 +92,23 @@ class GithubDataset:
                              commit['commit']['message'], data_after])
 
     def get_all_commits_from(self, month_passed, year_start):
-        # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
         since = datetime.strptime(f'{str(year_start)}-01-01', '%Y-%m-%d') + timedelta(days=30*month_passed) # X jours en arriere
-        until = since + timedelta(days=30)  # X + 1 jour en arriere
+        until = since + timedelta(days=30)  # X + 1 mois en arrière
         data = {'items': []}
 
         for page in range(1, 21):
             url = f'https://api.github.com/search/commits?q=message:{"+".join(self.searching_words)} committer-date:SINCE..UNTIL&order' \
                   f'=desc&page={page}' \
                   f'&per_page={50}'
-            url = url.replace('SINCE', since.strftime('%Y-%m-%dT%H:%M:%SZ')).replace('UNTIL', until.strftime(
+            try:
+                url = url.replace('SINCE', since.strftime('%Y-%m-%dT%H:%M:%SZ')).replace('UNTIL', until.strftime(
                 '%Y-%m-%dT%H:%M:%SZ'))
-            r = requests.get(url)
-            r.raise_for_status()
-            tmp = r.json()
+                r = requests.get(url)
+                r.raise_for_status()
+                tmp = r.json()
+            except :
+                print(f"commits not found")
+                return []
 
             if len(tmp["items"]) == 0:
                 break
@@ -154,13 +157,14 @@ class GithubDataset:
 
 # dataset = GithubDataset('python', 900, ['memory', 'error'], 100, 90)
 # dataset.clean_code_from_file('output\\dataset_all_v2.csv')
+if __name__ == '__main__':
 
-starting_year = 2002
-end_year = starting_year + 1
-for year in range(starting_year, end_year):
-    dataset = GithubDataset(['memory', 'error', 'python'])
-    dataset.load_from_commits(4, year)
-    dataset.save(f'output\\dataset_{year}.csv')
+    starting_year = 2010
+    end_year = 2022
+    for year in range(starting_year, end_year):
+        dataset = GithubDataset(['memory', 'error', 'python'])
+        dataset.load_from_commits(12, year)
+        dataset.save(f'output\\dataset_{year}.csv')
 
 # x = []
 # for i in range(1, 10):

@@ -1,2 +1,2 @@
-github_token = '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'#Quentin
-#github_token = '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'#Marvin
+# github_token = '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'#Quentin
+github_token = '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'#Marvin
