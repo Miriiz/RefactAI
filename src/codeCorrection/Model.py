@@ -82,7 +82,7 @@ def train_model(m: Model, dataset, dataset_test):
         dataset,
         validation_data=dataset_test,
         epochs=epch,
-        batch_size=32,
+        batch_size=batch_size,
         callbacks=[
             tf.keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=1, write_graph=True, write_images=True)
         ]
