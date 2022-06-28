@@ -175,10 +175,46 @@ class GithubDataset:
             it += 1
         return x_train, y_train
 
+    def clean_code_from_file(self, location):
+        file = open(location, encoding="utf-8")
+        csvreader = csv.DictReader(file, delimiter=';')
+        # header = next(csvreader)
+        result = {}
+        for row in csvreader:
+            for column, value in row.items():
+                result.setdefault(column, []).append(value)
+        file.close()
 
-j = 0
-for i in range(0, 600, 10):
-    dataset = GithubDataset('python', 900, ['memory', 'error'], 100 + i, 90 + i)
+        clean_code = []
+        for code in result['Code']:
+            code_array = code.split("\n")
+            clean_code_array = []
+            for line_code in code_array:
+                new_line = list(line_code)
+                if len(new_line) != 0:
+                    if new_line[0] == '-' or new_line[0] == '+':
+                        new_line[0] = ' '
+                    elif new_line[0] == '@':
+                        start_indice = line_code.find("@@", 4, len(line_code)) + 3
+                        new_line = new_line[start_indice:]
+
+                clean_code_array.append(''.join(new_line))
+            clean_code.append('\n'.join(clean_code_array))
+
+        data = []
+        for i in range(len(result['Username'])):
+            data.append([result['Label'][i], result['Page'][i], result['Username'][i], result['Repo'][i],
+                         result['Commit'][i], result['Bug'][i], clean_code[i]])
+
+        with open(location, 'w', newline='', encoding="utf-8") as saving_file:
+            writer = csv.writer(saving_file, delimiter=';')
+            writer.writerow(['Label', 'Page', 'Username', 'Repo', 'Commit', 'Bug', 'Code'])
+            for d in data:
+                writer.writerow(d)
+
+
+# dataset = GithubDataset('python', 900, ['memory', 'error'], 100, 90)
+# dataset.clean_code_from_file('output\\dataset_all_v2.csv')
 '''
 j = 0
 for i in range(0, 100, 10):

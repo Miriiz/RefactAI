@@ -6,61 +6,56 @@ from fpdf import FPDF
 class PDF(FPDF):
     def __init__(self):
         super(PDF, self).__init__()
-        self.files_link = None
-
         self.toc = []
-        self.numbering = 0
+        self.numbering = False
         self.numPageNum = 1
+        self.my_links = []
 
     def AddPage(self):
-        FPDF.AddPage(self)
+        self.add_page()
         if self.numbering:
             self.numPageNum += 1
 
     def startPageNums(self):
-        self.numbering = 1
+        self.numbering = True
 
     def stopPageNums(self):
-        self.numbering = 0
-
-    def numPageNo(self):
-        return self.numPageNum
+        self.numbering = False
 
     def TOC_Entry(self, txt, level=0):
-        self.toc += [{'t': txt, 'l': level, 'p': self.numPageNo()}]
+        self.toc += [{'t': txt, 'l': level, 'p': self.numPageNum}]
 
     def insertTOC(self, location=1, labelSize=20, entrySize=10, tocfont='Times', label='Table of Contents'):
         self.stopPageNums()
         self.AddPage()
         tocstart = self.page
 
-        self.SetFont(tocfont, 'B', labelSize)
-        self.Cell(0, 5, label, 0, 1, 'C')
-        self.Ln(10)
-
+        self.set_font(tocfont, 'B', labelSize)
+        self.cell(0, 5, label, 0, 1, 'C')
+        self.ln(10)
+        it = 0
         for t in self.toc:
             # Offset
             level = t['l']
             if level > 0:
-                self.Cell(level * 8)
+                self.cell(level * 8)
             weight = ''
             if level == 0:
                 weight = 'B'
             Str = t['t']
-            self.SetFont(tocfont, weight, entrySize)
-            strsize = self.GetStringWidth(Str)
-            self.Cell(strsize + 2, self.FontSize + 2, Str)
+            self.set_font(tocfont, weight, entrySize)
+            strsize = self.get_string_width(Str)
+            self.cell(strsize + 2, self.font_size + 2, Str, link=self.my_links[it])
+            it += 1
 
             # Filling dots
-            self.SetFont(tocfont, '', entrySize)
-            PageCellSize = self.GetStringWidth(str(t['p'])) + 2
-            w = self.w - self.lMargin - self.rMargin - PageCellSize - (level * 8) - (strsize + 2)
-            nb = w / self.GetStringWidth('.')
-            dots = ['.' for i in range(nb)]
-            self.Cell(w, self.FontSize + 2, dots, 0, 0, 'R')
-
-            # Page number
-            self.Cell(PageCellSize, self.FontSize + 2, str(t['p']), 0, 1, 'R')
+            self.set_font(tocfont, '', entrySize)
+            PageCellSize = self.get_string_width(str(t['p'])) + 2
+            w = self.w - self.l_margin - self.r_margin - PageCellSize - (level * 8) - (strsize + 2)
+            nb = int(w / self.get_string_width('.'))
+            dots = ''.join(['.' for i in range(nb)])
+            self.cell(w, self.font_size + 2, dots, 0, 0, 'R')
+            self.ln()
 
         # grab it and move to selected location
         n = self.page
@@ -102,13 +97,6 @@ class PDF(FPDF):
         self.cell(0, 10, "-> " + func[1][0]['summary_text'], 0, 1)
         self.ln()
 
-    def add_summary(self, files):
-        self.files_link = self.add_link()
-        self.set_font('Arial', 'B', 16)
-        #self.set_link(self.files_link)
-        self.cell(40, 10, 'Page 2', border=1, ln=0, align='', fill=False)
-        return
-
     def add_error(self, message):
         self.set_text_color(194, 8, 8)
         self.set_font('Arial', '', 12)
@@ -116,9 +104,12 @@ class PDF(FPDF):
         self.set_text_color(0, 0, 0)
 
     def add_path(self, path):
-        self.add_page()
+        self.AddPage()
+        self.my_links.append(self.add_link())
+        self.set_link(self.my_links[len(self.my_links) - 1])
         self.set_font('Arial', 'B', 14)
         self.cell(0, 10, path, 0, 1)#, link=self.files_link)
+        self.TOC_Entry(path)
 
     def save(self, path,  filename):
         if os.path.exists(path):
