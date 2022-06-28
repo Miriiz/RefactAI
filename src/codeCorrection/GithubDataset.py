@@ -1,5 +1,4 @@
 import time
-
 import requests
 import pandas as pd
 import csv
@@ -8,145 +7,112 @@ from tqdm import tqdm
 from datetime import datetime, timedelta
 
 
-# issue
+def load_github_dataset(location):
+    file = open(location, encoding="utf-8")
+    csvreader = csv.DictReader(file, delimiter=';')
+    # header = next(csvreader)
+    result = {}
+    x_train = []
+    y_train = []
+    for row in csvreader:
+        for column, value in row.items():
+            result.setdefault(column, []).append(value)
+    file.close()
+    indices_without_labels = []
+    it = 0
+    for label in result['Label']:
+        if label == 'OK':
+            y_train.append(1)
+        elif label == 'KO':
+            y_train.append(0)
+        else:
+            indices_without_labels.append(it)
+        it += 1
+    it = 0
+    for code in result['Code']:
+        if it not in indices_without_labels:
+            x_train.append(code)
+        it += 1
+    return x_train, y_train
+
+
+def clean_line(line):
+    new_line = list(line)
+    if len(new_line) != 0:
+        if new_line[0] == '-' or new_line[0] == '+':
+            new_line[0] = ' '
+        elif new_line[0] == '@':
+            start_indice = line.find("@@", 4, len(line)) + 3
+            new_line = new_line[start_indice:]
+
+    return ''.join(new_line)
+
+
+def clear_file_content(file_content):
+    content_file_before = []
+    content_file_after = []
+    start_indice = file_content.find("@@", 4, len(file_content)) + 3
+    for line in file_content[start_indice:].split('\n'):
+        if line[0] == '+':
+            content_file_after.append(clean_line(line))
+        elif line[0] == '-':
+            content_file_before.append(clean_line(line))
+        else:
+            content_file_after.append(clean_line(line))
+            content_file_before.append(clean_line(line))
+    return '\n'.join(content_file_before), '\n'.join(content_file_after)
+
+
 class GithubDataset:
-    def __init__(self, language, number_of_repo, searching_words, day_since, today_remove=0):
+    def __init__(self, searching_words):
         self.headers = {'Authorization': f'token {github_token}'}
-        self.language = language
-        self.number_of_repo = number_of_repo
         self.searching_words = searching_words
         self.data = []
-        self.page = 1
-        self.day_since = day_since
-        self.repo_per_page = 20
-        self.today_remove = today_remove
-        if number_of_repo < 20:
-            self.repo_per_page = number_of_repo
 
-    def load_commits(self, start_at=1):
-        i = 0
-        self.page = start_at
-
-        number_of_pages = int(self.number_of_repo / self.repo_per_page)
-        for i in tqdm(range(number_of_pages)):
-            commits = self.get_all_commits(self.page)
+    def load_from_commits(self, number_of_month, start_year=2001):
+        for month in tqdm(range(number_of_month)):
+            commits = self.get_all_commits_from(month, start_year)
             for commit in commits:
-                detailed_commit = self.get_commit(commit['repository']['owner']['login'], commit['repository']['name'], commit['sha'])
+                detailed_commit = self.get_commit(commit['repository']['owner']['login'], commit['repository']['name'],
+                                                  commit['sha'])
                 if detailed_commit is None:
-                    print("commit not found")
                     continue
                 for file in detailed_commit['files']:
                     if 'patch' in file:
-                        #if 'def' not in file['patch']:
-                         #   continue
-                        data_before, data_after = self.clear_file_content(file['patch'])
+                        # if 'def' not in file['patch']:
+                        #   continue
+                        data_before, data_after = clear_file_content(file['patch'])
                         self.data.append(
-                            ["KO", str(self.page), commit['repository']['owner']['login'], commit['repository']['name'], commit['sha'],
+                            ["KO", commit['repository']['owner']['login'], commit['repository']['name'],
+                             commit['sha'],
                              commit['commit']['message'], data_before])
                         self.data.append(
-                            ["OK", str(self.page), commit['repository']['owner']['login'], commit['repository']['name'], commit['sha'],
+                            ["OK", commit['repository']['owner']['login'], commit['repository']['name'],
+                             commit['sha'],
                              commit['commit']['message'], data_after])
-            self.page += 1
 
-    def load_from_commits(self, start_at=1):
-        i = 0
-        self.page = start_at
-
-        number_of_pages = int(self.number_of_repo / self.repo_per_page)
-        for i in tqdm(range(number_of_pages)):
-            repos = self.get_all_repo(self.page)
-            for repo in repos:
-                commits = self.get_all_commits(repo['owner']['login'], repo['name'])
-
-                if not isinstance(commits, list):
-                    print("commits not found")
-                    continue
-                for commit in commits:
-                    can_get_commit = True
-                    for searching_word in self.searching_words:
-                        if searching_word not in commit['commit']['message']:
-                            can_get_commit = False
-
-                    if can_get_commit:
-                        detailed_commit = self.get_commit(repo['owner']['login'], repo['name'], commit['sha'])
-                        if detailed_commit is None:
-                            continue
-                        for file in detailed_commit['files']:
-                            if 'patch' in file:
-                                data_before, data_after = self.clear_file_content(file['patch'])
-                                self.data.append(
-                                    ["KO", str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
-                                     commit['commit']['message'], data_before])
-                                self.data.append(
-                                    ["OK", str(self.page), repo['owner']['login'], repo['name'], commit['sha'],
-                                     commit['commit']['message'], data_after])
-            self.page += 1
-
-    def clear_file_content(self, file_content):
-        content_file_before = []
-        content_file_after = []
-        start_indice = file_content.find("@@", 4, len(file_content)) + 3
-        for line in file_content[start_indice:].split('\n'):
-            if line[0] == '+':
-                content_file_after.append(line)
-            elif line[0] == '-':
-                content_file_before.append(line)
-            else:
-                content_file_after.append(line)
-                content_file_before.append(line)
-        return '\n'.join(content_file_before), '\n'.join(content_file_after)
-
-    def get_all_repo(self, page):
+    def get_all_commits_from(self, month_passed, year_start):
         # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
-        since = datetime.today() - timedelta(days=self.day_since)  # X jours en arriere
-        until = since + timedelta(days=1)  # X + 1 jour en arriere
-        today = datetime.today() - timedelta(days=self.today_remove)
+        since = datetime.strptime(f'{str(year_start)}-01-01', '%Y-%m-%d') + timedelta(days=30*month_passed) # X jours en arriere
+        until = since + timedelta(days=30)  # X + 1 jour en arriere
         data = {'items': []}
-        i = 0
-        while until < today:
-            url = f'https://api.github.com/search/repositories?q=language:{self.language} created:SINCE..UNTIL&order' \
-                  f'=desc&page={page}' \
-                  f'&per_page={self.repo_per_page}'
-            url = url.replace('SINCE', since.strftime('%Y-%m-%dT%H:%M:%SZ')).replace('UNTIL', until.strftime(
-                '%Y-%m-%dT%H:%M:%SZ'))
-            r = requests.get(url)
-            r.raise_for_status()
-            tmp = r.json()
-            if i == 0:
-                data = {**data, **tmp}
-                i += 1
-            else:
-                data["items"].extend(tmp["items"])
-            since = until
-            until = since + timedelta(days=1)
-            time.sleep(10)
 
-        return data['items']
-
-    def get_all_commits(self, page):
-        # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
-        since = datetime.today() - timedelta(days=self.day_since*30)  # X jours en arriere
-        until = since + timedelta(days=1*30)  # X + 1 jour en arriere
-        today = datetime.today() - timedelta(days=self.today_remove*30)
-        data = {'items': []}
-        i = 0
-        print("+".join(self.searching_words))
-        while until < today:
+        for page in range(1, 21):
             url = f'https://api.github.com/search/commits?q=message:{"+".join(self.searching_words)} committer-date:SINCE..UNTIL&order' \
                   f'=desc&page={page}' \
-                  f'&per_page={self.repo_per_page}'
+                  f'&per_page={50}'
             url = url.replace('SINCE', since.strftime('%Y-%m-%dT%H:%M:%SZ')).replace('UNTIL', until.strftime(
                 '%Y-%m-%dT%H:%M:%SZ'))
             r = requests.get(url)
             r.raise_for_status()
             tmp = r.json()
-            if i == 0:
+
+            if len(tmp["items"]) == 0:
+                break
+            if page == 1:
                 data = {**data, **tmp}
-                i += 1
             else:
                 data["items"].extend(tmp["items"])
-            since = until
-            until = since + timedelta(days=1 * 30)
         return data['items']
 
     def get_repo(self, owner, name):
@@ -175,105 +141,26 @@ class GithubDataset:
             data = r.json()
             return data
         except requests.exceptions.HTTPError:
-            print(f"commit {commit_sha} not found")
+            print(f"commit {owner}/{name}/commits/{commit_sha} not found")
             return None
 
-    # Récupérer tous les fichiers
-    # https://api.github.com/repos/chriskiehl/Gooey/contents
-    def get_repo_files(self, owner, name):
-        return
-
-    # -> url : Récupérer un fichier
-    # https://api.github.com/repos/chriskiehl/Gooey/contents/pip_deploy.py?ref=master
-    # -> git_url : https://api.github.com/repos/chriskiehl/Gooey/git/blobs/3a8710f0319f5d8ad3bf1199906bb4958781dfda
-
-    # issues https://api.github.com/repos/chriskiehl/Gooey/issues
-    # https://api.github.com/repos/chriskiehl/Gooey/issues/816 /
-    # https://api.github.com/repos/chriskiehl/Gooey/issues/816/comments compare
-    # https://api.github.com/repos/chriskiehl/Gooey/compare/4990377cc32fabcfc047a5b543625875f247724d
-    # ...be4b11b8f27f500e7326711641755ad44576d408
     def save(self, location):
         with open(location, 'w', newline='', encoding="utf-8") as saving_file:
             writer = csv.writer(saving_file, delimiter=';')
-            writer.writerow(['Label', 'Page', 'Username', 'Repo', 'Commit', 'Bug', 'Code'])
+            writer.writerow(['Label', 'Username', 'Repo', 'Commit', 'Bug', 'Code'])
             for data in self.data:
                 writer.writerow(data)
-
-    def load_from_file(self, location):
-        file = open(location, encoding="utf-8")
-        csvreader = csv.DictReader(file, delimiter=';')
-        # header = next(csvreader)
-        result = {}
-        x_train = []
-        y_train = []
-        for row in csvreader:
-            for column, value in row.items():
-                result.setdefault(column, []).append(value)
-        file.close()
-        indices_without_labels = []
-        it = 0
-        for label in result['Label']:
-            if label == 'OK':
-                y_train.append(1)
-            elif label == 'KO':
-                y_train.append(0)
-            else:
-                indices_without_labels.append(it)
-            it += 1
-        it = 0
-        for code in result['Code']:
-            if it not in indices_without_labels:
-                x_train.append(code)
-            it += 1
-        return x_train, y_train
-
-    def clean_code_from_file(self, location):
-        file = open(location, encoding="utf-8")
-        csvreader = csv.DictReader(file, delimiter=';')
-        # header = next(csvreader)
-        result = {}
-        for row in csvreader:
-            for column, value in row.items():
-                result.setdefault(column, []).append(value)
-        file.close()
-
-        clean_code = []
-        for code in result['Code']:
-            code_array = code.split("\n")
-            clean_code_array = []
-            for line_code in code_array:
-                new_line = list(line_code)
-                if len(new_line) != 0:
-                    if new_line[0] == '-' or new_line[0] == '+':
-                        new_line[0] = ' '
-                    elif new_line[0] == '@':
-                        start_indice = line_code.find("@@", 4, len(line_code)) + 3
-                        new_line = new_line[start_indice:]
-
-                clean_code_array.append(''.join(new_line))
-            clean_code.append('\n'.join(clean_code_array))
-
-        data = []
-        for i in range(len(result['Username'])):
-            data.append([result['Label'][i], result['Page'][i], result['Username'][i], result['Repo'][i],
-                         result['Commit'][i], result['Bug'][i], clean_code[i]])
-
-        with open(location, 'w', newline='', encoding="utf-8") as saving_file:
-            writer = csv.writer(saving_file, delimiter=';')
-            writer.writerow(['Label', 'Page', 'Username', 'Repo', 'Commit', 'Bug', 'Code'])
-            for d in data:
-                writer.writerow(d)
 
 
 # dataset = GithubDataset('python', 900, ['memory', 'error'], 100, 90)
 # dataset.clean_code_from_file('output\\dataset_all_v2.csv')
 
-j = 4
-for i in range(0, 100, 10):
-     dataset = GithubDataset('python', 50, ['memory', 'error', 'python'], 10 + i, 0 + i)
-     dataset.load_from_commits()
-     dataset.save('output\\dataset_{j}.csv'.format(j=j))
-     j += 1
+starting_year = 2002
+end_year = starting_year + 1
+for year in range(starting_year, end_year):
+    dataset = GithubDataset(['memory', 'error', 'python'])
+    dataset.load_from_commits(4, year)
+    dataset.save(f'output\\dataset_{year}.csv')
 
 # x = []
 # for i in range(1, 10):
