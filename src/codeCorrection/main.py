@@ -43,7 +43,7 @@ def save_plot_accuracy(log, filename, title="model accuracy"):
 if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     dataset = GithubDataset('python', 900, 'memory', 5)
-    x_train, y_train = dataset.load_from_file("output\\dataset_all.csv")
+    x_train, y_train = dataset.load_from_file("output\\dataset_all_v2.csv")
     x_train, x_test = split_dataset(x_train)
     y_train, y_test = split_dataset(y_train)
 
@@ -51,7 +51,8 @@ if __name__ == '__main__':
     test = prepare_dataset(x_test, y_test)
 
     #model = create_base_model(linear_mod)
-    model = create_base_model(add_mlp_layers)
+    # model = create_base_model(add_mlp_layers)
+    model = create_base_model(add_lstm_layers)
     # forest = create_base_model(forest_mod)
     logs = train_model(model, train, test)
     save_plot_accuracy(logs, "mlp")

@@ -1,7 +1,7 @@
 import time
 
 import requests
-# import pandas as pd
+import pandas as pd
 import csv
 from define import github_token
 from tqdm import tqdm
@@ -176,13 +176,13 @@ class GithubDataset:
         return x_train, y_train
 
 
-j = 4
-for i in range(0, 100, 10):
-    # 130 / 120
-    dataset = GithubDataset('python', 900, ['memory', 'error'], 10 + i, 0 + i)
-    dataset.load_commits()
-    dataset.save('output\\dataset_{j}.csv'.format(j=j))
-    j += 1
+# j = 4
+# for i in range(0, 100, 10):
+#     # 130 / 120
+#     dataset = GithubDataset('python', 900, ['memory', 'error'], 10 + i, 0 + i)
+#     dataset.load_commits()
+#     dataset.save('output\\dataset_{j}.csv'.format(j=j))
+#     j += 1
 
 '''
 j = 0
@@ -192,13 +192,17 @@ for i in range(0, 100, 10):
     dataset.save('output\\dataset_{j}.csv'.format(j=j))
     j += 1
 '''
+# x = []
+# for i in range(1, 10):
+#     x.append('output\\dataset_{i}.csv'.format(i=i))
+#
 # li = []
+# x.append('output\\dataset_all.csv')
 # for filename in x:
-#     df = pd.read_csv(filename, index_col=None,sep=";",header=0)
+#     df = pd.read_csv(filename, index_col=None, sep=";", header=0)
 #     li.append(df)
 #
 # frame = pd.concat(li, axis=0, ignore_index=True)
-# frame.to_csv('output\\dataset_all.csv', sep=';', index=False)
-
-
-
+# # check pd doublon
+# frame.drop_duplicates(inplace=True)
+# frame.to_csv('output\\dataset_all_v2.csv', sep=';', index=False)

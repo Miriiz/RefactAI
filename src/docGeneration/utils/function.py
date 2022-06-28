@@ -6,6 +6,8 @@ from difflib import SequenceMatcher
 from transformers import AutoTokenizer, AutoModelWithLMHead, SummarizationPipeline
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+import nltk
+import spacy
 
 IGNORE_DIR_NAME = "src"
 IGNORE_DIR_NAME_2 = ".git"
@@ -22,7 +24,6 @@ def pythonTokenizer(line):
     for toktype, tok, start, end, line in tokenize.generate_tokens(line.readline):
         if not toktype == tokenize.COMMENT:
             if toktype == tokenize.STRING:
-                print("CODE_STRING", tok)
                 result.append("CODE_STRING")
             elif toktype == tokenize.NUMBER:
                 result.append("CODE_INTEGER")
@@ -114,8 +115,9 @@ Fonction to generate summarize from function
 def createCodeAndSummarize(code):
     x = []
     for c in code:
+        print("Avant tokenization" , c)
         tokenized_code = pythonTokenizer(c)
-        print(tokenized_code)
+        print("Code tokenizer" , tokenized_code)
         x.append((c, pipeline([tokenized_code])))
     return x
 
@@ -188,7 +190,7 @@ def SameMeaning(str, str2):
         else:
             l2.append(0)
     c = 0
-    # cosine formula
+    # cosine formule
     for i in range(len(rvector)):
         c += l1[i] * l2[i]
     cosine = c / float((sum(l1) * sum(l2)) ** 0.5)
@@ -201,6 +203,21 @@ def getFunctionName(funct):
     for c in funct.split('\n'):
         if c.startswith('def'):
             return c.replace(':', '')
+
+
+def SameMeaning_nlp(cc, ca):
+    nltk.download('all')
+    nlp = spacy.load('en_core_web_lg')
+    str_nlp = nlp(cc)
+    str2_nlp = nlp(ca[1][0]["summary_text"])
+    str_nlp_nostop = nlp(' '.join([str(t) for t in str_nlp if not t.is_stop]))
+    str2_nlp_nostop = nlp(' '.join([str(t) for t in str2_nlp if not t.is_stop]))
+    write_cosine(getFunctionName(ca[0]), round(str_nlp_nostop.similarity(str2_nlp_nostop) * 100,2))
+    return str_nlp_nostop.similarity(str2_nlp_nostop) > 0.5
+
+def SameMeaning_Seq(str, str2):
+    X_list, Y_list = ReformateStr(str, str2)
+    return SequenceMatcher(None, str, str2[1][0]["summary_text"]).ratio() > 0.5
 
 
 def write_cosine(functionName, consineValue):

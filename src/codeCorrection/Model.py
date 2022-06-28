@@ -1,5 +1,5 @@
 import tensorflow as tf
-#import tensorflow_decision_forests as tfdf
+# import tensorflow_decision_forests as tfdf
 import os
 from tensorflow.keras import Model, Sequential
 from tensorflow.python.keras.layers import Flatten
@@ -13,13 +13,13 @@ def create_base_model(add_custom_layers_func) -> Model:
     m = Sequential()
     add_custom_layers_func(m)
     m.add(Flatten())
-    m.add(tf.keras.layers.Dense(1, activation="sigmoid"))#tf.keras.activations.softmax))
+    m.add(tf.keras.layers.Dense(1, activation="sigmoid"))  # tf.keras.activations.softmax))
 
     m.compile(optimizer=tf.keras.optimizers.SGD(learning_rate=ref_lr / ref_batch_size * batch_size),
               loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=["accuracy"])
-    #m.build()
-    #m.summary()
+    # m.build()
+    # m.summary()
 
     return m
 
@@ -49,6 +49,13 @@ def add_mlp_layers(model):
     model.add(tf.keras.layers.Flatten())
     for _ in range(5):
         model.add(tf.keras.layers.Dense(2048, activation=tf.keras.activations.linear))
+        model.add(tf.keras.layers.BatchNormalization())
+        model.add(tf.keras.layers.Activation(activation=tf.keras.activations.tanh))
+
+
+def add_lstm_layers(model):
+    for _ in range(5):
+        model.add(tf.keras.layers.LSTM(units=2048, return_sequences=True))
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Activation(activation=tf.keras.activations.tanh))
 
