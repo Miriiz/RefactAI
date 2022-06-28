@@ -146,7 +146,7 @@ class GithubDataset:
             else:
                 data["items"].extend(tmp["items"])
             since = until
-            until = since + timedelta(days=1)
+            until = since + timedelta(days=1 * 30)
         return data['items']
 
     def get_repo(self, owner, name):
