@@ -56,6 +56,9 @@ if __name__ == '__main__':
 
     #model = create_base_model(linear_mod)
     model = create_base_model(add_mlp_layers2, encoder)
+    # model = create_base_model(add_mlp_layers)
+    # model = create_base_model(add_lstm_layers)
+
     # forest = create_base_model(forest_mod)
     logs = train_model(model, train, test)
     save_plot_accuracy(logs, "mlp2Adam")
