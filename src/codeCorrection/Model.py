@@ -18,7 +18,8 @@ def create_base_model(add_custom_layers_func, encoder=None) -> Model:
     m.add(Flatten())
     m.add(tf.keras.layers.Dense(1, activation="sigmoid"))  # tf.keras.activations.softmax))
 
-    m.compile(optimizer=tf.keras.optimizers.Adam(1e-4), #tf.keras.optimizers.SGD(learning_rate=ref_lr / ref_batch_size * batch_size),
+    m.compile(optimizer=tf.keras.optimizers.Adam(1e-4),
+              # tf.keras.optimizers.SGD(learning_rate=ref_lr / ref_batch_size * batch_size),
               loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
               metrics=["accuracy"])
     # m.build()
@@ -54,6 +55,14 @@ def add_mlp_layers(model):
         model.add(tf.keras.layers.Dense(2048, activation=tf.keras.activations.linear))
         model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.Activation(activation=tf.keras.activations.tanh))
+
+
+def classic_layers(model):
+    model.add(tf.keras.layers.Embedding(10000 + 1, 16))
+    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.GlobalAveragePooling1D())
+    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.Dense(1, activation=tf.keras.activations.sigmoid))
 
 
 def add_mlp_layers2(model, encoder):
