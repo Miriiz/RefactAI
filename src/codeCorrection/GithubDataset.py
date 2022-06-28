@@ -125,9 +125,9 @@ class GithubDataset:
 
     def get_all_commits(self, page):
         # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
-        since = datetime.today() - timedelta(days=self.day_since)  # X jours en arriere
-        until = since + timedelta(days=1)  # X + 1 jour en arriere
-        today = datetime.today() - timedelta(days=self.today_remove)
+        since = datetime.today() - timedelta(days=self.day_since*30)  # X jours en arriere
+        until = since + timedelta(days=1*30)  # X + 1 jour en arriere
+        today = datetime.today() - timedelta(days=self.today_remove*30)
         data = {'items': []}
         i = 0
         print("+".join(self.searching_words))
