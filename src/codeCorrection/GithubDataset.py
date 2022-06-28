@@ -29,9 +29,35 @@ class GithubDataset:
 
         number_of_pages = int(self.number_of_repo / self.repo_per_page)
         for i in tqdm(range(number_of_pages)):
+            commits = self.get_all_commits(self.page)
+            for commit in commits:
+                detailed_commit = self.get_commit(commit['repository']['owner']['login'], commit['repository']['name'], commit['sha'])
+                if detailed_commit is None:
+                    print("commit not found")
+                    continue
+                for file in detailed_commit['files']:
+                    if 'patch' in file:
+                        #if 'def' not in file['patch']:
+                         #   continue
+                        data_before, data_after = self.clear_file_content(file['patch'])
+                        self.data.append(
+                            ["KO", str(self.page), commit['repository']['owner']['login'], commit['repository']['name'], commit['sha'],
+                             commit['commit']['message'], data_before])
+                        self.data.append(
+                            ["OK", str(self.page), commit['repository']['owner']['login'], commit['repository']['name'], commit['sha'],
+                             commit['commit']['message'], data_after])
+            self.page += 1
+
+    def load_from_commits(self, start_at=1):
+        i = 0
+        self.page = start_at
+
+        number_of_pages = int(self.number_of_repo / self.repo_per_page)
+        for i in tqdm(range(number_of_pages)):
             repos = self.get_all_repo(self.page)
             for repo in repos:
                 commits = self.get_all_commits(repo['owner']['login'], repo['name'])
+
                 if not isinstance(commits, list):
                     print("commits not found")
                     continue
@@ -95,6 +121,32 @@ class GithubDataset:
             until = since + timedelta(days=1)
             time.sleep(10)
 
+        return data['items']
+
+    def get_all_commits(self, page):
+        # On peut monter plus haut si on veut + de repos ( jusqu'a 365 mais un des repos pose problème )
+        since = datetime.today() - timedelta(days=self.day_since)  # X jours en arriere
+        until = since + timedelta(days=1)  # X + 1 jour en arriere
+        today = datetime.today() - timedelta(days=self.today_remove)
+        data = {'items': []}
+        i = 0
+        print("+".join(self.searching_words))
+        while until < today:
+            url = f'https://api.github.com/search/commits?q=message:{"+".join(self.searching_words)} committer-date:SINCE..UNTIL&order' \
+                  f'=desc&page={page}' \
+                  f'&per_page={self.repo_per_page}'
+            url = url.replace('SINCE', since.strftime('%Y-%m-%dT%H:%M:%SZ')).replace('UNTIL', until.strftime(
+                '%Y-%m-%dT%H:%M:%SZ'))
+            r = requests.get(url)
+            r.raise_for_status()
+            tmp = r.json()
+            if i == 0:
+                data = {**data, **tmp}
+                i += 1
+            else:
+                data["items"].extend(tmp["items"])
+            since = until
+            until = since + timedelta(days=1)
         return data['items']
 
     def get_repo(self, owner, name):
@@ -216,13 +268,12 @@ class GithubDataset:
 # dataset = GithubDataset('python', 900, ['memory', 'error'], 100, 90)
 # dataset.clean_code_from_file('output\\dataset_all_v2.csv')
 
-# j = 4
-# for i in range(0, 100, 10):
-#     # 130 / 120
-#     dataset = GithubDataset('python', 900, ['memory', 'error'], 10 + i, 0 + i)
-#     dataset.load_commits()
-#     dataset.save('output\\dataset_{j}.csv'.format(j=j))
-#     j += 1
+j = 4
+for i in range(0, 100, 10):
+     dataset = GithubDataset('python', 50, ['memory', 'error', 'python'], 10 + i, 0 + i)
+     dataset.load_from_commits()
+     dataset.save('output\\dataset_{j}.csv'.format(j=j))
+     j += 1
 
 # x = []
 # for i in range(1, 10):

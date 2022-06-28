@@ -6,7 +6,7 @@ from tensorflow.keras import layers
 from matplotlib import pyplot as plt
 
 max_token = 500
-encoder = layers.experimental.preprocessing.TextVectorization(output_mode='int', output_sequence_length=250,
+encoder = layers.experimental.preprocessing.TextVectorization(output_mode='int', output_sequence_length=100,
                                                               max_tokens=max_token)
 test_percent = 5 / 100
 
@@ -24,8 +24,8 @@ def split_dataset(x):
 
 def prepare_dataset(x, y):
     assert(len(x) == len(y))
-    dx = tf.data.Dataset.from_tensor_slices(np.array(x))
-    dy = tf.data.Dataset.from_tensor_slices(np.array(y))
+    dx = tf.data.Dataset.from_tensor_slices(np.array(x)).shuffle(len(x))
+    dy = tf.data.Dataset.from_tensor_slices(np.array(y)).shuffle(len(y))
     dcomb = tf.data.Dataset.zip((dx, dy)).batch(len(x))
     encoder.adapt(dcomb.map(lambda text, label: text))
     return dcomb.map(vectorize_text)
@@ -50,9 +50,9 @@ if __name__ == '__main__':
 
     train = prepare_dataset(x_train, y_train)
     test = prepare_dataset(x_test, y_test)
-    valu, label = next(iter(train))
-    for i in range(len(valu)):
-        print(valu[i])
+    # valu, label = next(iter(train))
+    # for i in range(len(valu)):
+        # print(valu[i])
 
     #model = create_base_model(linear_mod)
     # model = create_base_model(add_mlp_layers2, encoder)
