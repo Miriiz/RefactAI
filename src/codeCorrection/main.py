@@ -51,8 +51,9 @@ if __name__ == '__main__':
     test = prepare_dataset(x_test, y_test)
 
     #model = create_base_model(linear_mod)
-    # model = create_base_model(add_mlp_layers)
-    model = create_base_model(add_lstm_layers)
+    model = create_base_model(add_mlp_layers)
+    model = create_base_model(classic_layers)
+    # model = create_base_model(add_lstm_layers)
     # forest = create_base_model(forest_mod)
     logs = train_model(model, train, test)
     save_plot_accuracy(logs, "mlp")

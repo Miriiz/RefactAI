@@ -53,12 +53,12 @@ def add_mlp_layers(model):
         model.add(tf.keras.layers.Activation(activation=tf.keras.activations.tanh))
 
 
-def add_lstm_layers(model):
-    for _ in range(5):
-        model.add(tf.keras.layers.LSTM(units=2048, return_sequences=True))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Activation(activation=tf.keras.activations.tanh))
-
+def classic_layers(model):
+    model.add(tf.keras.layers.Embedding(10000 + 1, 16))
+    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.GlobalAveragePooling1D())
+    model.add(tf.keras.layers.Dropout(0.2))
+    model.add(tf.keras.layers.Dense(1, activation=tf.keras.activations.sigmoid))
 
 # Function to train model
 def train_model(m: Model, dataset, dataset_test):
