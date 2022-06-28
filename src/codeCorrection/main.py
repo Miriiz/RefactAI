@@ -55,9 +55,14 @@ if __name__ == '__main__':
         print(valu[i])
 
     #model = create_base_model(linear_mod)
-    model = create_base_model(add_mlp_layers2, encoder)
+    # model = create_base_model(add_mlp_layers2, encoder)
+    model = create_base_model(add_mlp_layers3, encoder)
+    # model = create_base_model(classic_layers)
     # model = create_base_model(add_mlp_layers)
     # model = create_base_model(add_lstm_layers)
     # forest = create_base_model(forest_mod)
+    model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+                  optimizer=tf.keras.optimizers.Adam(1e-4),
+                  metrics=['accuracy'])
     logs = train_model(model, train, test)
-    save_plot_accuracy(logs, "mlp2Adam")
+    save_plot_accuracy(logs, "mlp3")
