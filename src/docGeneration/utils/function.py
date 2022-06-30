@@ -49,8 +49,8 @@ def getFileFromDir(currentPath):
     newCurrentRep.append(currentPath)
     for r in rep:
         if r != currentPath:
-            newCurrentRep.append(currentPath + '/' + r)
-            for it in os.scandir(currentPath + '/' + r):
+            newCurrentRep.append(currentPath + r)
+            for it in os.scandir(currentPath + r):
                 if it.is_dir():
                     newCurrentRep.append(it.path)
     file = []
@@ -80,7 +80,7 @@ def getFunctFromFile(currentPath):
             path = r
             for f in files[1]:
                 if path != files[2]:
-                    filepath = path + "/" + f
+                    filepath = path + "\\" + f
                 else:
                     filepath = path + f
                 if os.path.exists(filepath):
