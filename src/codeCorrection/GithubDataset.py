@@ -1,4 +1,5 @@
 import time
+import random
 import requests
 import pandas as pd
 import csv
@@ -92,7 +93,8 @@ class GithubDataset:
                              commit['commit']['message'], data_after])
 
     def get_all_commits_from(self, month_passed, year_start):
-        since = datetime.strptime(f'{str(year_start)}-01-01', '%Y-%m-%d') + timedelta(days=30*month_passed) # X jours en arriere
+        since = datetime.strptime(f'{str(year_start)}-01-01', '%Y-%m-%d') + timedelta(
+            days=30 * month_passed)  # X jours en arriere
         until = since + timedelta(days=30)  # X + 1 mois en arrière
         data = {'items': []}
 
@@ -100,16 +102,11 @@ class GithubDataset:
             url = f'https://api.github.com/search/commits?q=message:{"+".join(self.searching_words)} committer-date:SINCE..UNTIL&order' \
                   f'=desc&page={page}' \
                   f'&per_page={50}'
-            try:
-                url = url.replace('SINCE', since.strftime('%Y-%m-%dT%H:%M:%SZ')).replace('UNTIL', until.strftime(
+            url = url.replace('SINCE', since.strftime('%Y-%m-%dT%H:%M:%SZ')).replace('UNTIL', until.strftime(
                 '%Y-%m-%dT%H:%M:%SZ'))
-                r = requests.get(url)
-                r.raise_for_status()
-                tmp = r.json()
-            except :
-                print(f"commits not found")
-                return []
-
+            r = requests.get(url, headers=self.headers)
+            r.raise_for_status()
+            tmp = r.json()
             if len(tmp["items"]) == 0:
                 break
             if page == 1:
@@ -159,24 +156,32 @@ class GithubDataset:
 # dataset.clean_code_from_file('output\\dataset_all_v2.csv')
 if __name__ == '__main__':
 
-    starting_year = 2010
-    end_year = 2022
-    for year in range(starting_year, end_year):
-        dataset = GithubDataset(['memory', 'error', 'python'])
-        dataset.load_from_commits(12, year)
-        dataset.save(f'output\\dataset_{year}.csv')
+    # starting_year = 2018
+    # end_year = 2022
+    # for year in range(starting_year, end_year):
+    #     dataset = GithubDataset(['memory', 'error', 'python'])
+    #     dataset.load_from_commits(12, year)
+    #     dataset.save(f'output\\dataset_{year}.csv')
 
-# x = []
-# for i in range(1, 10):
-#     x.append('output\\dataset_{i}.csv'.format(i=i))
-#
-# li = []
-# x.append('output\\dataset_all.csv')
-# for filename in x:
-#     df = pd.read_csv(filename, index_col=None, sep=";", header=0)
-#     li.append(df)
-#
-# frame = pd.concat(li, axis=0, ignore_index=True)
-# # check pd doublon
-# frame.drop_duplicates(inplace=True)
-# frame.to_csv('output\\dataset_all_v2.csv', sep=';', index=False)
+    x = []
+    # for i in range(10, 22):
+    #     x.append('D:/Dev/RefactAI/src/codeCorrection/output/dataset_20{i}.csv'.format(i=i))
+    x.append('D:/Dev/RefactAI/src/codeCorrection/output/dataset_2002_2005.csv')
+    x.append('D:/Dev/RefactAI/src/codeCorrection/output/dataset_2006.csv')
+    x.append('D:/Dev/RefactAI/src/codeCorrection/output/dataset_all_vfinal.csv')
+    li = []
+    for filename in x:
+        print("read csv")
+        df = pd.read_csv(filename, index_col=None, sep=";", header=0)
+        li.append(df)
+    print("Concatenation")
+    frame = pd.concat(li, axis=0, ignore_index=True)
+    print("Done, drop duplicates")
+    # check pd doublon
+    frame.drop_duplicates(inplace=True)
+    # Drop if column code is empty
+    print("Drop if column code is empty")
+    frame.dropna(subset=['Code'], inplace=True)
+    print("Done, save")
+    frame.to_csv('output\\dataset_all_vfinal.csv', sep=';', index=False)
+    print("Done, End")

@@ -23,7 +23,7 @@ def split_dataset(x):
 
 
 def prepare_dataset(x, y):
-    assert(len(x) == len(y))
+    assert (len(x) == len(y))
     dx = tf.data.Dataset.from_tensor_slices(np.array(x)).shuffle(len(x))
     dy = tf.data.Dataset.from_tensor_slices(np.array(y)).shuffle(len(y))
     dcomb = tf.data.Dataset.zip((dx, dy)).batch(len(x))
@@ -43,25 +43,24 @@ def save_plot_accuracy(log, filename, title="model accuracy"):
 
 if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-    x_train, y_train = load_github_dataset("output\\dataset_all_v2.csv")
+    x_train, y_train = load_github_dataset("output\\dataset_2011.csv")
     x_train, x_test = split_dataset(x_train)
     y_train, y_test = split_dataset(y_train)
 
     train = prepare_dataset(x_train, y_train)
     test = prepare_dataset(x_test, y_test)
+
     # valu, label = next(iter(train))
     # for i in range(len(valu)):
-        # print(valu[i])
+    # print(valu[i])
 
-    #model = create_base_model(linear_mod)
-    # model = create_base_model(add_mlp_layers2, encoder)
-    model = create_base_model(add_mlp_layers3, encoder)
+    # model = create_base_model(linear_mod)
+    model = create_base_model(add_mlp_layers2, encoder)
+    # model = create_base_model(add_mlp_layers3, encoder)
     # model = create_base_model(classic_layers)
     # model = create_base_model(add_mlp_layers)
-    # model = create_base_model(add_lstm_layers)
+    # model = create_base_model(add_lstm_layers, encoder)
     # forest = create_base_model(forest_mod)
-    model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-                  optimizer=tf.keras.optimizers.Adam(1e-4),
-                  metrics=['accuracy'])
+    # model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     logs = train_model(model, train, test)
-    save_plot_accuracy(logs, "mlp3")
+    save_plot_accuracy(logs, "mlp3_bis_lr0.001_bs16_epoch100")

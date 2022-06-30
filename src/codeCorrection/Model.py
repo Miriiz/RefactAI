@@ -17,10 +17,14 @@ def create_base_model(add_custom_layers_func, encoder=None) -> Model:
         add_custom_layers_func(m)
     m.add(Flatten())
     m.add(tf.keras.layers.Dense(1, activation="sigmoid"))  # tf.keras.activations.softmax))
-
-    m.compile(optimizer=tf.keras.optimizers.Adam(1e-4),
+    #
+    # optimizer = 'adam'
+    optimizer = tf.keras.optimizers.Adam(1e-4)
+    m.compile(tf.keras.optimizers.SGD(learning_rate=ref_lr / ref_batch_size * batch_size), #
               # tf.keras.optimizers.SGD(learning_rate=ref_lr / ref_batch_size * batch_size),
-              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
+              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True)
+              # loss='sparse_categorical_crossentropy'
+              ,
               metrics=["accuracy"])
     # m.build()
     # m.summary()
@@ -73,39 +77,61 @@ def add_mlp_layers2(model, encoder):
             # Use masking to handle the variable sequence lengths
             mask_zero=True),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64)),
-        tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(1)
+        tf.keras.layers.Dense(64),
+        tf.keras.layers.Dense(1),
+        tf.keras.layers.Activation('sigmoid')
     ])
 
 
 def add_mlp_layers3(model, encoder):
     model = tf.keras.Sequential([
-        encoder,
         tf.keras.layers.Embedding(len(encoder.get_vocabulary()), 64, mask_zero=True),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64, return_sequences=True)),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32)),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(1)
     ])
 
 
-def add_lstm_layers(model):
-    for _ in range(5):
-        model.add(tf.keras.layers.LSTM(units=2048, return_sequences=True))
-        model.add(tf.keras.layers.BatchNormalization())
-        model.add(tf.keras.layers.Activation(activation=tf.keras.activations.tanh))
+
+
+def add_lstm_layers(model, encoder):
+    embedding_dim = 64
+    model = tf.keras.Sequential([
+        # Add an Embedding layer expecting input vocab of size 5000, and output embedding dimension of size 64 we set
+        # at the top
+        tf.keras.layers.Embedding(len(encoder.get_vocabulary()), embedding_dim, mask_zero=True),
+        tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(embedding_dim, return_sequences=True)),
+        tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32)),
+        tf.keras.layers.Dense(embedding_dim, activation='relu'),
+        tf.keras.layers.Dense(6, activation='softmax')
+    ])
 
 
 # Function to train model
 def train_model(m: Model, dataset, dataset_test):
+    train_size = sum(1 for _ in dataset.unbatch())
+    val_size = sum(1 for _ in dataset_test.unbatch())
+    print(train_size)
+    print(val_size)
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath='model\mlp3',
+        save_weights_only=True,
+        monitor='val_accuracy',
+        mode='max',
+        save_best_only=True)
+
     log = m.fit(
         dataset,
         validation_data=dataset_test,
+        # steps_per_epoch=train_size // batch_size,
+        # validation_steps=val_size // batch_size,
         epochs=epch,
         batch_size=batch_size,
         callbacks=[
-            tf.keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=1, write_graph=True, write_images=True)
+            model_checkpoint_callback
+            # tf.keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=0, write_graph=True, write_images=True)
         ]
     )
     return log
