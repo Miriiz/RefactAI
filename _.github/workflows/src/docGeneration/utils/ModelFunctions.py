@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras import Model, Sequential
 from tensorflow.python.keras.layers import Flatten
+CUDA_VISIBLE_DEVICES=""
 
 train_size = 0
 val_size = 0
