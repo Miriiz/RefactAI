@@ -85,7 +85,7 @@ class PDF(FPDF):
     def footer(self):
         self.set_y(-15)
         self.set_font('Arial', 'I', 8)
-        self.cell(0, 10, 'Page ' + str(self.page_no()) + '/{nb}', 0, 0, 'C')
+        self.cell(0, 10, 'Page ' + str(self.page_no() + 1) + '/{nb}', 0, 0, 'C')
 
     def add_function(self, func):
         self.set_font('Arial', '', 10)

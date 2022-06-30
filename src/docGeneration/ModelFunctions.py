@@ -1,5 +1,5 @@
 import tensorflow as tf
-import os
+import numpy as np
 from tensorflow.keras import Model, Sequential
 from tensorflow.python.keras.layers import Flatten
 
@@ -11,6 +11,20 @@ batch_size = 32
 
 encoder = tf.keras.layers.experimental.preprocessing.TextVectorization(output_mode='int', output_sequence_length=100,
                                                               max_tokens=500)
+
+
+def vectorize_text(text, label):
+    text = tf.expand_dims(text, -1)
+    label = tf.reshape(label, [int(tf.size(label)), 1])
+    return encoder(text) / 500, label
+
+
+def prepare_dataset(x, y):
+    dx = tf.data.Dataset.from_tensor_slices(np.array(x)).shuffle(len(x))
+    dy = tf.data.Dataset.from_tensor_slices(np.array(y)).shuffle(len(y))
+    dcomb = tf.data.Dataset.zip((dx, dy)).batch(len(x))
+    encoder.adapt(dcomb.map(lambda text, label: text))
+    return dcomb.map(vectorize_text)
 
 
 def add_mlp_layers2(model, encoder):
