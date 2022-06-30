@@ -44,6 +44,7 @@ def save_plot_accuracy(log, filename, title="model accuracy"):
 if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     x_train, y_train = load_github_dataset("output\\dataset_2011.csv")
+    # x_train, y_train = load_github_dataset("output\\dataset_2002_2005.csv")
     x_train, x_test = split_dataset(x_train)
     y_train, y_test = split_dataset(y_train)
 
@@ -51,9 +52,9 @@ if __name__ == '__main__':
     test = prepare_dataset(x_test, y_test)
 
     # valu, label = next(iter(train))
+    # print(len(valu))
     # for i in range(len(valu)):
     # print(valu[i])
-
     # model = create_base_model(linear_mod)
     model = create_base_model(add_mlp_layers2, encoder)
     # model = create_base_model(add_mlp_layers3, encoder)
@@ -62,5 +63,13 @@ if __name__ == '__main__':
     # model = create_base_model(add_lstm_layers, encoder)
     # forest = create_base_model(forest_mod)
     # model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    # logs = train_model(model, train, test)
+    # save_plot_accuracy(logs, "mlp3_bis_lr0.001_bs16_epoch100")
     logs = train_model(model, train, test)
-    save_plot_accuracy(logs, "mlp3_bis_lr0.001_bs16_epoch100")
+    save_plot_accuracy(logs, "mlp2v2")
+
+    model.load_weights('model\\mlp2')
+    loss, acc = model.evaluate(test, verbose=2)
+    print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
+    valu, label = next(iter(test))
+    print(model.predict(valu))
