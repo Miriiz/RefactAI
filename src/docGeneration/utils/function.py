@@ -115,9 +115,9 @@ Fonction to generate summarize from function
 def createCodeAndSummarize(code):
     x = []
     for c in code:
-        print("Avant tokenization" , c)
+        #print("Avant tokenization" , c)
         tokenized_code = pythonTokenizer(c)
-        print("Code tokenizer" , tokenized_code)
+        #print("Code tokenizer" , tokenized_code)
         x.append((c, pipeline([tokenized_code])))
     return x
 

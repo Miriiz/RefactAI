@@ -62,7 +62,7 @@ def classic_layers(model):
     model.add(tf.keras.layers.Dropout(0.2))
     model.add(tf.keras.layers.GlobalAveragePooling1D())
     model.add(tf.keras.layers.Dropout(0.2))
-    model.add(tf.keras.layers.Dense(1, activation=tf.keras.activations.sigmoid))
+    model.add(tf.keras.layers.Dense(1)) #,activation=tf.keras.activations.sigmoid))
 
 
 def add_mlp_layers2(model, encoder):
@@ -80,7 +80,6 @@ def add_mlp_layers2(model, encoder):
 
 def add_mlp_layers3(model, encoder):
     model = tf.keras.Sequential([
-        encoder,
         tf.keras.layers.Embedding(len(encoder.get_vocabulary()), 64, mask_zero=True),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64, return_sequences=True)),
         tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32)),
@@ -99,13 +98,24 @@ def add_lstm_layers(model):
 
 # Function to train model
 def train_model(m: Model, dataset, dataset_test):
+    train_size2 = sum(1 for _ in dataset.unbatch())
+    val_size2 = sum(1 for _ in dataset_test.unbatch())
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath='model\\mlp2',
+        save_weights_only=True,
+        monitor='val_accuracy',
+        mode='max',
+        save_best_only=True)
+
     log = m.fit(
         dataset,
         validation_data=dataset_test,
         epochs=epch,
         batch_size=batch_size,
+        #steps_per_epoch=train_size2 // batch_size,
+        #validation_steps=val_size2 // batch_size,
         callbacks=[
-            tf.keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=1, write_graph=True, write_images=True)
+            model_checkpoint_callback
         ]
     )
     return log

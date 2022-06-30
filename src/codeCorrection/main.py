@@ -43,25 +43,31 @@ def save_plot_accuracy(log, filename, title="model accuracy"):
 
 if __name__ == '__main__':
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-    x_train, y_train = load_github_dataset("output\\dataset_all_v2.csv")
+    x_train, y_train = load_github_dataset("output\\dataset_2002_2005.csv")
     x_train, x_test = split_dataset(x_train)
     y_train, y_test = split_dataset(y_train)
 
     train = prepare_dataset(x_train, y_train)
     test = prepare_dataset(x_test, y_test)
-    # valu, label = next(iter(train))
+    valu, label = next(iter(train))
+    print(len(valu))
     # for i in range(len(valu)):
         # print(valu[i])
 
+
     #model = create_base_model(linear_mod)
-    # model = create_base_model(add_mlp_layers2, encoder)
-    model = create_base_model(add_mlp_layers3, encoder)
+    model = create_base_model(add_mlp_layers2, encoder)
+    #model = create_base_model(add_mlp_layers3, encoder)
     # model = create_base_model(classic_layers)
     # model = create_base_model(add_mlp_layers)
     # model = create_base_model(add_lstm_layers)
     # forest = create_base_model(forest_mod)
-    model.compile(loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-                  optimizer=tf.keras.optimizers.Adam(1e-4),
-                  metrics=['accuracy'])
-    logs = train_model(model, train, test)
-    save_plot_accuracy(logs, "mlp3")
+
+    #logs = train_model(model, train, test)
+    #save_plot_accuracy(logs, "mlp2v2")
+
+    model.load_weights('model\\mlp2')
+    loss, acc = model.evaluate(test, verbose=2)
+    print("Restored model, accuracy: {:5.2f}%".format(100 * acc))
+    valu, label = next(iter(test))
+    print(model.predict(valu))

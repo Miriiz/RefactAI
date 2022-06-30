@@ -9,7 +9,6 @@ class PDF(FPDF):
         self.toc = []
         self.numbering = False
         self.numPageNum = 1
-        self.my_links = []
 
     def AddPage(self):
         self.add_page()
@@ -45,7 +44,7 @@ class PDF(FPDF):
             Str = t['t']
             self.set_font(tocfont, weight, entrySize)
             strsize = self.get_string_width(Str)
-            self.cell(strsize + 2, self.font_size + 2, Str, link=self.my_links[it])
+            self.cell(strsize + 2, self.font_size + 2, Str)
             it += 1
 
             # Filling dots
@@ -55,6 +54,7 @@ class PDF(FPDF):
             nb = int(w / self.get_string_width('.'))
             dots = ''.join(['.' for i in range(nb)])
             self.cell(w, self.font_size + 2, dots, 0, 0, 'R')
+            self.cell(PageCellSize, self.font_size + 2, str(t['p']), 0, 1, 'R')
             self.ln()
 
         # grab it and move to selected location
@@ -105,10 +105,8 @@ class PDF(FPDF):
 
     def add_path(self, path):
         self.AddPage()
-        self.my_links.append(self.add_link())
-        self.set_link(self.my_links[len(self.my_links) - 1])
         self.set_font('Arial', 'B', 14)
-        self.cell(0, 10, path, 0, 1)#, link=self.files_link)
+        self.cell(0, 10, path, 0, 1)
         self.TOC_Entry(path)
 
     def save(self, path,  filename):
