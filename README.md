@@ -11,7 +11,9 @@ Ce programme possède trois parties :
 ![image](https://user-images.githubusercontent.com/37442009/189965598-4ced2a00-f1c5-485b-8d95-04d4bf64fd4d.png)
 
 ## Dataset
-Les données utilisées pour entraîner le modèle 
+Les données utilisées pour entraîner le modèle ont été récupéré grâce à l'API de Github. L'API comporte beaucoup de restrictions, mais nous avons réussi à passer outre pour récupérer depuis les repositories publics, les commits fait en python et contenant un message qui peut nous intéresser. Pour chaque commit, on récupère 2 ligne de données.
+- L'une de label négatif (code avant commit)
+- L'autre de label positif (code après commit)
 
 ## Comparaison des commentaires
 Nous afficherons le pourcentage de compatibilité entre le commentaire au-dessus de la fonction et ce que notre modèle prédit. Cette option permettra aux utilisateurs d’avoir une indication sur leurs commentaires. 
